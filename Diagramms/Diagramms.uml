@@ -55,6 +55,20 @@
         <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_0Cc20fCeEeizF-sWZrYt8Q" value="1"/>
         <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_0Cdd4PCeEeizF-sWZrYt8Q" value="1"/>
       </ownedAttribute>
+      <ownedAttribute xmi:type="uml:Property" xmi:id="_Txiw0PP3EeiMA_njR57WVA" name="clientSocket" visibility="private" type="_Q5gzwPP3EeiMA_njR57WVA"/>
+      <ownedAttribute xmi:type="uml:Property" xmi:id="_ecDywPP3EeiMA_njR57WVA" name="inputScanner" visibility="private" type="_gGxBEPP3EeiMA_njR57WVA"/>
+      <ownedAttribute xmi:type="uml:Property" xmi:id="_pLkCYPP3EeiMA_njR57WVA" name="socketOut" visibility="private" type="_cF2lsPCcEeizF-sWZrYt8Q"/>
+      <ownedOperation xmi:type="uml:Operation" xmi:id="_Gg0FIPP4EeiMA_njR57WVA" name="manageConnection"/>
+      <ownedOperation xmi:type="uml:Operation" xmi:id="_KFXJ8PP4EeiMA_njR57WVA" name="processMessage">
+        <ownedParameter xmi:type="uml:Parameter" xmi:id="_PGLYcPP4EeiMA_njR57WVA" name="message">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:type="uml:Operation" xmi:id="_QcMwMPP4EeiMA_njR57WVA" name="messageToClient">
+        <ownedParameter xmi:type="uml:Parameter" xmi:id="_Ul-B8PP4EeiMA_njR57WVA" name="message">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedParameter>
+      </ownedOperation>
     </packagedElement>
     <packagedElement xmi:type="uml:DataType" xmi:id="_0FdO4PCbEeizF-sWZrYt8Q" name="ProcessBuilder"/>
     <packagedElement xmi:type="uml:DataType" xmi:id="_YV9MgPCcEeizF-sWZrYt8Q" name="Process"/>
@@ -72,6 +86,8 @@
       </eAnnotations>
       <ownedEnd xmi:type="uml:Property" xmi:id="_0Cdd4fCeEeizF-sWZrYt8Q" name="socketmanager" type="_rA5hkPAAEeiXr887oHbGkg" association="_0CbosPCeEeizF-sWZrYt8Q"/>
     </packagedElement>
+    <packagedElement xmi:type="uml:DataType" xmi:id="_Q5gzwPP3EeiMA_njR57WVA" name="Socket"/>
+    <packagedElement xmi:type="uml:DataType" xmi:id="_gGxBEPP3EeiMA_njR57WVA" name="Scanner"/>
   </packagedElement>
   <packagedElement xmi:type="uml:Package" xmi:id="_ItYNwPCfEeizF-sWZrYt8Q" name="ClientDiagramms">
     <packagedElement xmi:type="uml:Class" xmi:id="_WqUCsPCfEeizF-sWZrYt8Q" name="Board">

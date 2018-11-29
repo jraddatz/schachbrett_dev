@@ -19,6 +19,11 @@ public class SocketManager {
 	private static final int PORT = 3000;
 	private static final String CHARSET_NAME = "UTF-8";
 	private static final String NEW_GAME_RESPONSE = "New Game started";
+	private static final String ERROR_RESPONSE = "Error";
+	
+	private static final String NEW_GAME_MESSAGE = "new";
+	
+	private static final String TURN_REGEX = "[a-h][1-8][a-h][1-8]";
 
 	private Scanner inputScanner;
 	private Socket clientSocket;
@@ -63,16 +68,18 @@ public class SocketManager {
 
 	public void processMessage(String message) {
 		String engineTurn;
-		if (message.equals("new")) {
+		if (message.equals(NEW_GAME_MESSAGE)) {
 			fileManager.createNewHistory();
 			stockfish.messageWithoutAnswer(EngineConst.NEW_GAME_COMMAND);
 			stockfish.clearMoveHistory();
 			messageToClient(NEW_GAME_RESPONSE);
-		} else {
+		} else if(message.matches(TURN_REGEX)){
 			engineTurn = stockfish.getTurn(message);
 			fileManager.appendTurnToHistory(message);
 			fileManager.appendTurnToHistory(engineTurn);
 			messageToClient(engineTurn);
+		} else {
+			messageToClient(ERROR_RESPONSE);
 		}
 	}
 
@@ -81,22 +88,17 @@ public class SocketManager {
 		ServerSocket serverSocket = new ServerSocket(PORT);
 		System.err.println("Started server on port " + PORT);
 
-		// repeatedly wait for connections, and process
 		while (true) {
-
-			// a "blocking" call which waits until a connection is requested
 			clientSocket = serverSocket.accept();
 			System.err.println("Accepted connection from client");
 
 			socketOut = clientSocket.getOutputStream();
 			setupScanner(clientSocket);
-
-			// waits for data and reads it in until connection dies
-			// readLine() blocks until the server receives a new line from client
+			
 			String buffer = "";
 			buffer = readLine();
 			processMessage(buffer);
-			// close IO streams, then socket
+
 			System.err.println("Closing connection with client");
 			socketOut.close();
 			inputScanner.close();
