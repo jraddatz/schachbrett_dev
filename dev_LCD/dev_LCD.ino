@@ -45,26 +45,15 @@ LiquidCrystal lcd(PA_6, PD_7, PE_3, PE_2, PE_1, PE_0);
 
 void setup() {
   Serial.begin(9600);
-    pinMode(RED_LED, OUTPUT); 
   // set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
   // Print a message to the LCD.
-  lcd.print("hello, world!");
-  Serial.println("Hallow");
+  lcd.print("Test");
+  lcd.setCursor(0,1);
+  lcd.print("Jendrik ist doof");
 }
 
 void loop() {
-  // Turn off the display:
-    Serial.println("1");
-
-  digitalWrite(RED_LED, LOW);
-  lcd.noDisplay();
-  delay(500);
-   // Turn on the display:
-     Serial.println("2");
-
-   digitalWrite(RED_LED, HIGH);
-  lcd.display();
   delay(500);
 }
 
