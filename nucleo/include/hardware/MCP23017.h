@@ -44,15 +44,14 @@ public:
 
   uint8_t writeRegister(uint8_t, uint8_t);
   uint8_t readRegister(uint8_t);
-  void readGPIO(uint8_t);
-  void writeGPIO(uint8_t, uint8_t);
-
-     
+  uint8_t readGPIO(uint8_t);
+  uint8_t writeGPIO(uint8_t, uint8_t);
+  uint8_t getChanges(uint8_t);
 private:
   I2C & i2c;
   uint8_t adress;
+  uint8_t lastMeasurementA;
+  uint8_t lastMeasurementB;
 };
-
-
 
 #endif
