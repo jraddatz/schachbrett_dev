@@ -4,8 +4,8 @@
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>20</x>
-      <y>570</y>
+      <x>0</x>
+      <y>600</y>
       <w>150</w>
       <h>70</h>
     </coordinates>
@@ -19,8 +19,8 @@
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>350</x>
-      <y>330</y>
+      <x>330</x>
+      <y>360</y>
       <w>410</w>
       <h>120</h>
     </coordinates>
@@ -35,8 +35,8 @@ Figure
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>190</x>
-      <y>570</y>
+      <x>170</x>
+      <y>600</y>
       <w>150</w>
       <h>70</h>
     </coordinates>
@@ -50,8 +50,8 @@ Figure
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>360</x>
-      <y>570</y>
+      <x>340</x>
+      <y>600</y>
       <w>150</w>
       <h>70</h>
     </coordinates>
@@ -65,8 +65,8 @@ Figure
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>530</x>
-      <y>570</y>
+      <x>510</x>
+      <y>600</y>
       <w>150</w>
       <h>70</h>
     </coordinates>
@@ -80,8 +80,8 @@ Figure
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>700</x>
-      <y>570</y>
+      <x>680</x>
+      <y>600</y>
       <w>150</w>
       <h>70</h>
     </coordinates>
@@ -95,8 +95,8 @@ Figure
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>870</x>
-      <y>570</y>
+      <x>850</x>
+      <y>600</y>
       <w>150</w>
       <h>70</h>
     </coordinates>
@@ -110,8 +110,8 @@ Figure
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>380</x>
-      <y>70</y>
+      <x>360</x>
+      <y>100</y>
       <w>250</w>
       <h>150</h>
     </coordinates>
@@ -120,17 +120,18 @@ Figure
 - row: int
 - col: int
 - occupating: Figure
+- standardFigure: const Figure
 --
 + getOccupating(): Figure
 + setOccupating(figure: Figure): void
-</panel_attributes>
++ resetField(): void</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>710</x>
-      <y>40</y>
+      <x>690</x>
+      <y>70</y>
       <w>400</w>
       <h>190</h>
     </coordinates>
@@ -148,8 +149,8 @@ Figure
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>620</x>
-      <y>140</y>
+      <x>600</x>
+      <y>170</y>
       <w>110</w>
       <h>30</h>
     </coordinates>
@@ -159,8 +160,8 @@ Figure
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>480</x>
-      <y>210</y>
+      <x>460</x>
+      <y>240</y>
       <w>30</w>
       <h>140</h>
     </coordinates>
@@ -170,8 +171,8 @@ Figure
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>510</x>
-      <y>440</y>
+      <x>490</x>
+      <y>470</y>
       <w>30</w>
       <h>110</h>
     </coordinates>
@@ -181,8 +182,8 @@ Figure
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>80</x>
-      <y>520</y>
+      <x>60</x>
+      <y>550</y>
       <w>460</w>
       <h>70</h>
     </coordinates>
@@ -192,8 +193,8 @@ Figure
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>260</x>
-      <y>520</y>
+      <x>240</x>
+      <y>550</y>
       <w>280</w>
       <h>70</h>
     </coordinates>
@@ -203,8 +204,8 @@ Figure
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>420</x>
-      <y>520</y>
+      <x>400</x>
+      <y>550</y>
       <w>120</w>
       <h>70</h>
     </coordinates>
@@ -214,8 +215,8 @@ Figure
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>510</x>
-      <y>520</y>
+      <x>490</x>
+      <y>550</y>
       <w>120</w>
       <h>70</h>
     </coordinates>
@@ -225,8 +226,8 @@ Figure
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>520</x>
-      <y>520</y>
+      <x>500</x>
+      <y>550</y>
       <w>280</w>
       <h>70</h>
     </coordinates>
@@ -236,8 +237,8 @@ Figure
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>520</x>
-      <y>520</y>
+      <x>500</x>
+      <y>550</y>
       <w>450</w>
       <h>70</h>
     </coordinates>
