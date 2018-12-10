@@ -1,4 +1,5 @@
 #include "hardware/MCP23017.h"
+#include "mbed.h"
 
 MCP23017::MCP23017(uint8_t adress, I2C &i2c_) : i2c(i2c_), adress(adress)
 {

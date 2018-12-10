@@ -1,7 +1,14 @@
 #include <mbed.h>
+#include <EthernetInterface.h>
 #include <SerialWireOutput.h>
 #include "hardware/MCP23017.h"
 #include "TextLCD.h"
+
+
+const char* ECHO_SERVER_ADDRESS = "192.168.2.2";
+const int ECHO_SERVER_PORT = 7;
+
+
 
 
 Serial pc(USBTX, USBRX); // tx, rx
@@ -52,25 +59,34 @@ void printError (uint8_t mcpID){
 
 int main()
 {
-  i2c.frequency(100000);
-  resetI2C(); 
-  uint8_t a = 0;
-  uint8_t errorCode = 0;
-  while (1)
-  {
-    wait_ms(1);
-    for(uint8_t i  = 0 ; i < 8 ; i++){
-      a = mcps[i].readGPIO(MCP23017_GPIO_PORT_B);
-      
-      errorCode = mcps[i].writeGPIO(MCP23017_GPIO_PORT_A, a ^ 0xff);
-      if(errorCode != 0){
-        i2c.abort_transfer();
-        pc.printf("%d\t%d\n", errorCode, i);
-        errorCount++;
-        printError(i);
-        //mcps[i].reset();
-        resetI2C();
-      }
-    }
-  }
+  EthernetInterface eth;
+    // Bring up the ethernet interface
+    printf("Ethernet socket example\n");
+    net.connect();
+
+    // Show the network address
+    const char *ip = net.get_ip_address();
+    printf("IP address is: %s\n", ip ? ip : "No IP");
+
+    // Open a socket on the network interface, and create a TCP connection to mbed.org
+    TCPSocket socket;
+    socket.open(&net);
+    socket.connect("www.arm.com", 80);
+
+    // Send a simple http request
+    char sbuffer[] = "GET / HTTP/1.1\r\nHost: www.arm.com\r\n\r\n";
+    int scount = socket.send(sbuffer, sizeof sbuffer);
+    printf("sent %d [%.*s]\n", scount, strstr(sbuffer, "\r\n")-sbuffer, sbuffer);
+
+    // Recieve a simple http response and print out the response line
+    char rbuffer[64];
+    int rcount = socket.recv(rbuffer, sizeof rbuffer);
+    printf("recv %d [%.*s]\n", rcount, strstr(rbuffer, "\r\n")-rbuffer, rbuffer);
+
+    // Close the socket to return its memory and bring down the network interface
+    socket.close();
+
+    // Bring down the ethernet interface
+    net.disconnect();
+    printf("Done\n");
 }
