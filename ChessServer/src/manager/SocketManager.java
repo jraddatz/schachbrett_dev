@@ -3,8 +3,6 @@ package manager;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import Constants.EngineConst;
 
@@ -20,14 +18,15 @@ public class SocketManager {
 	private static final String CHARSET_NAME = "UTF-8";
 	private static final String NEW_GAME_RESPONSE = "New Game started";
 	private static final String ERROR_RESPONSE = "Error";
-	
+
 	private static final String NEW_GAME_MESSAGE = "new";
-	
-	private static final String TURN_REGEX = "[a-h][1-8][a-h][1-8]";
+
+	private static final String TURN_REGEX = "[a-h][1-8][a-h][1-8][qrbn]?";
 
 	private Scanner inputScanner;
 	private Socket clientSocket;
 	private OutputStream socketOut;
+	private ServerSocket serverSocket;
 
 	private EngineManager stockfish;
 	private FileManager fileManager;
@@ -73,7 +72,7 @@ public class SocketManager {
 			stockfish.messageWithoutAnswer(EngineConst.NEW_GAME_COMMAND);
 			stockfish.clearMoveHistory();
 			messageToClient(NEW_GAME_RESPONSE);
-		} else if(message.matches(TURN_REGEX)){
+		} else if (message.matches(TURN_REGEX)) {
 			engineTurn = stockfish.getTurn(message);
 			fileManager.appendTurnToHistory(message);
 			fileManager.appendTurnToHistory(engineTurn);
@@ -85,7 +84,7 @@ public class SocketManager {
 
 	public void manageConnection() throws IOException {
 		// create socket
-		ServerSocket serverSocket = new ServerSocket(PORT);
+		serverSocket = new ServerSocket(PORT);
 		System.err.println("Started server on port " + PORT);
 
 		while (true) {
@@ -94,7 +93,7 @@ public class SocketManager {
 
 			socketOut = clientSocket.getOutputStream();
 			setupScanner(clientSocket);
-			
+
 			String buffer = "";
 			buffer = readLine();
 			processMessage(buffer);

@@ -8,6 +8,7 @@ public class EngineConst {
 	public static final String REDAY_COMMAND = "isready\n";
 	public static final String NEW_GAME_COMMAND = "ucinewgame\n";
 	public static final String COMMAND_END = "\n";
+	public static final String QUIT_COMMANT = "quit\n";
 	public static final int DEPTH = 10;
 	public static final int MOVEPOS = 1;
 	
