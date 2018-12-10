@@ -28,6 +28,8 @@ public class SocketManager {
 	private OutputStream socketOut;
 	private ServerSocket serverSocket;
 
+	private boolean gameStarted = false;
+	
 	private EngineManager stockfish;
 	private FileManager fileManager;
 
@@ -68,11 +70,12 @@ public class SocketManager {
 	public void processMessage(String message) {
 		String engineTurn;
 		if (message.equals(NEW_GAME_MESSAGE)) {
+			gameStarted = true;
 			fileManager.createNewHistory();
 			stockfish.messageWithoutAnswer(EngineConst.NEW_GAME_COMMAND);
 			stockfish.clearMoveHistory();
 			messageToClient(NEW_GAME_RESPONSE);
-		} else if (message.matches(TURN_REGEX)) {
+		} else if (message.matches(TURN_REGEX) && gameStarted) {
 			engineTurn = stockfish.getTurn(message);
 			fileManager.appendTurnToHistory(message);
 			fileManager.appendTurnToHistory(engineTurn);
