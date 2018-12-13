@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import Constants.ServerConst;
+import decoder.Decoder;
 import Constants.EngineConst;
 
 import java.io.InputStream;
@@ -14,22 +16,13 @@ import java.io.BufferedInputStream;
 
 public class SocketManager {
 
-	private static final int PORT = 3000;
-	private static final String CHARSET_NAME = "UTF-8";
-	private static final String NEW_GAME_RESPONSE = "New Game started";
-	private static final String ERROR_RESPONSE = "Error";
-
-	private static final String NEW_GAME_MESSAGE = "new";
-
-	private static final String TURN_REGEX = "[a-h][1-8][a-h][1-8][qrbn]?";
-
 	private Scanner inputScanner;
 	private Socket clientSocket;
 	private OutputStream socketOut;
 	private ServerSocket serverSocket;
 
 	private boolean gameStarted = false;
-	
+
 	private EngineManager stockfish;
 	private FileManager fileManager;
 
@@ -41,7 +34,7 @@ public class SocketManager {
 	private void setupScanner(Socket socket) {
 		try {
 			InputStream is = socket.getInputStream();
-			inputScanner = new Scanner(new BufferedInputStream(is), CHARSET_NAME);
+			inputScanner = new Scanner(new BufferedInputStream(is), ServerConst.CHARSET_NAME);
 		} catch (IOException ioe) {
 			throw new IllegalArgumentException("Could not open " + socket, ioe);
 		}
@@ -69,26 +62,32 @@ public class SocketManager {
 
 	public void processMessage(String message) {
 		String engineTurn;
-		if (message.equals(NEW_GAME_MESSAGE)) {
+		try {
+			message = Decoder.decodeMessage(message);
+		} catch (NumberFormatException e) {
+			System.err.println("invalid Message");
+		}
+		if (message.equals(ServerConst.NEW_GAME_MESSAGE)) {
 			gameStarted = true;
 			fileManager.createNewHistory();
 			stockfish.messageWithoutAnswer(EngineConst.NEW_GAME_COMMAND);
 			stockfish.clearMoveHistory();
-			messageToClient(NEW_GAME_RESPONSE);
-		} else if (message.matches(TURN_REGEX) && gameStarted) {
+			messageToClient(ServerConst.NEW_GAME_RESPONSE);
+		} else if (message.matches(ServerConst.TURN_REGEX) && gameStarted) {
 			engineTurn = stockfish.getTurn(message);
 			fileManager.appendTurnToHistory(message);
 			fileManager.appendTurnToHistory(engineTurn);
+			engineTurn = Decoder.encodeTurn(engineTurn);
 			messageToClient(engineTurn);
 		} else {
-			messageToClient(ERROR_RESPONSE);
+			messageToClient(ServerConst.ERROR_RESPONSE);
 		}
 	}
 
 	public void manageConnection() throws IOException {
 		// create socket
-		serverSocket = new ServerSocket(PORT);
-		System.err.println("Started server on port " + PORT);
+		serverSocket = new ServerSocket(ServerConst.PORT);
+		System.err.println("Started server on port " + ServerConst.PORT);
 
 		while (true) {
 			clientSocket = serverSocket.accept();
