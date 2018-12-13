@@ -1,0 +1,149 @@
+.
+\newpage
+
+\paragraph{\LARGE Pseudocode}
+
+\section{Generall Conditions}
+
+\begin{algorithmic}
+\Function{generallConditions}{startRow, startColumn, endRow, endField}
+
+\If {!($0\leq startRow \leq 8$) || !($0\leq startColumn \leq 8$) || !($0\leq endRow \leq 8$) || !($0\leq endColumn \leq 8$)}
+    \State \Return false
+\EndIf
+\If {$isWhite \neq whitesTurn$}
+    \State \Return false
+\EndIf
+\If {$startRow == endRow$ \&\& $startColumn == endColumn$}
+    \State \Return false
+\EndIf
+
+\EndFunction
+\end{algorithmic}
+
+\begin{algorithmic}
+\Function{checkEndField}{endRow, endColum}
+\If{$Field[endRow][endColumn].empty == true$}
+	\State \Return true
+\EndIf
+\If{$Field[endRow][endColumn].Figure.isWhite == isWhithe$}
+	\State \Return false
+\EndIf
+\State \Return true
+
+\EndFunction
+\end{algorithmic}
+
+\section{Pawn}
+
+\begin{algorithmic}
+\If {isWhite}
+    \State $stepDir\gets 1$
+\Else
+     \State $stepDir\gets -1$
+\EndIf
+\State $rowStep\gets endRow - startRow$
+\If{(Field[endRow][endColumn].empty && $columnDiff == 1$) || (!Field[endRow][endColumn].empty && $columnDiff == 0$)}
+	\State \Return false
+\EndIf
+\If{$columnDiff == 0$ &&$rowStep == 1*stepDir$}
+	\State \Return true
+\EndIf
+\If{$columnDiff == 0$ &&$rowStep == 2*stepDir$ && !wasMoved}
+	\If{Field[startRow + 1][endRow].empty}
+		\State \Return true
+	\EndIf
+\EndIf
+\If{$columnDiff == 1$ &&$rowStep == 1*stepDir$}
+	\State \Return true
+\EndIf
+\State \Return false
+\end{algorithmic}
+
+\section{Rook}
+
+\begin{algorithmic}
+\If {!(($rowDiff == 0$ \&\& $columnDiff \neq 0$)||($rowDiff \neq 0$ \&\& $columnDiff == 0$))}
+    \State \Return false
+\EndIf
+\If {$rowDiff == 0$}
+    \State $column\gets min(startColumn,endColumn)$
+    \State $maxColumn\gets max(startColumn,endColumn)$
+    \While{$column < maxColumn$} 
+   	 \If{$Field[startRow][column].empty \neq true$}
+   		 \State \Return false
+   	 \EndIf
+   	 \State $column\gets column + 1$
+    \EndWhile
+\Else
+	\State $row\gets min(startRow,endRow)$
+    \State $maxRow\gets max(startRow,endRow)$
+    \While{$row < maxRow$} 
+   	 \If{$Field[startRow][column].empty \neq true$}
+   		 \State \Return false
+   	 \EndIf
+   	 \State $column\gets column + 1$
+    \EndWhile
+\EndIf
+\State \Return checkEndField(endRow,endColumn)
+\end{algorithmic}
+
+
+\section{Knight}
+
+\begin{algorithmic}
+\If {!(($rowDiff == 2$ \&\& $columnDiff == 1$)||($rowDiff == 1$ \&\& $columnDiff == 2$))}
+    \State \Return false
+\EndIf
+\State \Return checkEndField(endRow,endColumn)
+\end{algorithmic}
+
+\section{Bishop}
+
+\begin{algorithmic}
+\If {$rowDiff \neq columnDiff$}
+    \State \Return false
+\EndIf
+\If {$startRow < endRow$}
+    \State $rowStep\gets 1$
+\Else
+	\State $rowStep\gets -1$
+\EndIf
+\If {$startColumn < endColumn$}
+    \State $columnStep\gets 1$
+\Else
+	\State $columnStep\gets -1$
+\EndIf
+\State $row\gets startRow$
+\State $column\gets startColumn$
+\While{$row \neq endRow$} 
+   	 \If{$Field[row][column].empty \neq true$}
+   		 \State \Return false
+   	 \EndIf
+   	 \State $row\gets row +rowStep$
+   	 \State $column\gets column + columnStep$
+    \EndWhile
+\end{algorithmic}
+
+\section{Queen}
+
+\begin{algorithmic}
+\If {validBishopMove || validRookMove}
+    \State \Return true
+\EndIf
+ \State \Return false
+\end{algorithmic}
+
+\section{King}
+
+\begin{algorithmic}
+\If {$rowDiff \leq 1$ \&\& $columnDiff \leq 1$}
+    \State \Return true
+\EndIf
+\State \Return false
+\State \Return checkEndField(endRow,endColumn)
+\end{algorithmic}
+
+
+
+
