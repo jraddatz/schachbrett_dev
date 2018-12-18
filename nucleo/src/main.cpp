@@ -104,9 +104,16 @@ void checker_thread(){
         if(pointer == NULL){
           // not enough memory available
         } else {
-          pointer->x = change;
-          pointer->y = y;
-          communication.put(pointer);
+          uint8_t x = 0 ;
+          while (change){
+            if(change&1){
+              pointer->x = x;
+              pointer->y = y;
+              communication.put(pointer);
+            }
+            x++;
+            change >>=1;
+          }
         }
       }
     }
