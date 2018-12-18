@@ -1,6 +1,3 @@
-.
-\newpage
-
 \paragraph{\LARGE Pseudocode}
 
 \section{Generall Conditions}
@@ -43,18 +40,18 @@
      \State $stepDir\gets -1$
 \EndIf
 \State $rowStep\gets endRow - startRow$
-\If{(Field[endRow][endColumn].empty && $columnDiff == 1$) || (!Field[endRow][endColumn].empty && $columnDiff == 0$)}
+\If{(Field[endRow][endColumn].empty \&\& $columnDiff == 1$) || (!Field[endRow][endColumn].empty \&\& $columnDiff == 0$)}
 	\State \Return false
 \EndIf
-\If{$columnDiff == 0$ &&$rowStep == 1*stepDir$}
+\If{$columnDiff == 0$ \&\&$rowStep == 1*stepDir$}
 	\State \Return true
 \EndIf
-\If{$columnDiff == 0$ &&$rowStep == 2*stepDir$ && !wasMoved}
+\If{$columnDiff == 0$ \&\&$rowStep == 2*stepDir$ \&\& !wasMoved}
 	\If{Field[startRow + 1][endRow].empty}
 		\State \Return true
 	\EndIf
 \EndIf
-\If{$columnDiff == 1$ &&$rowStep == 1*stepDir$}
+\If{$columnDiff == 1$ \&\&$rowStep == 1*stepDir$ \&\&$Field[endRow][endColumn].Figure.white \neq this.white$}
 	\State \Return true
 \EndIf
 \State \Return false
@@ -123,6 +120,7 @@
    	 \State $row\gets row +rowStep$
    	 \State $column\gets column + columnStep$
     \EndWhile
+ \State \Return checkEndField(endRow,endColumn)
 \end{algorithmic}
 
 \section{Queen}
@@ -140,7 +138,6 @@
 \If {$rowDiff \leq 1$ \&\& $columnDiff \leq 1$}
     \State \Return true
 \EndIf
-\State \Return false
 \State \Return checkEndField(endRow,endColumn)
 \end{algorithmic}
 
