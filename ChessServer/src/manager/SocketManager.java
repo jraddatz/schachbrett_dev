@@ -6,82 +6,133 @@ import java.net.Socket;
 
 import Constants.ServerConst;
 import decoder.Decoder;
+import logic.Board;
+import logic.Move;
 import Constants.EngineConst;
+import Constants.LogicConst;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
-import java.io.BufferedInputStream;
 
 public class SocketManager {
 
-	private Scanner inputScanner;
 	private Socket clientSocket;
 	private OutputStream socketOut;
 	private ServerSocket serverSocket;
 
 	private boolean gameStarted = false;
+	private boolean versusEngine = false;
+	private boolean awaitingAck = false;
 
 	private EngineManager stockfish;
 	private FileManager fileManager;
+	private Board board;
 
 	public SocketManager() {
 		stockfish = new EngineManager(EngineConst.PATH);
 		fileManager = new FileManager();
 	}
 
-	private void setupScanner(Socket socket) {
-		try {
-			InputStream is = socket.getInputStream();
-			inputScanner = new Scanner(new BufferedInputStream(is), ServerConst.CHARSET_NAME);
-		} catch (IOException ioe) {
-			throw new IllegalArgumentException("Could not open " + socket, ioe);
-		}
-	}
 
-	private String readLine() {
-		String line;
+	private void messageToClient(byte[] message) {
 		try {
-			line = inputScanner.nextLine();
-		} catch (NoSuchElementException e) {
-			line = null;
-		}
-		return line;
-	}
-
-	private void messageToClient(String message) {
-
-		try {
-			socketOut.write(message.getBytes());
+			socketOut.write(message);
 			socketOut.flush();
 		} catch (IOException e) {
 			System.err.println("Couldn´t send Message");
 		}
 	}
 
-	public void processMessage(String message) {
-		String engineTurn;
-		try {
-			message = Decoder.decodeMessage(message);
-		} catch (NumberFormatException e) {
-			System.err.println("invalid Message");
-		}
-		if (message.equals(ServerConst.NEW_GAME_MESSAGE)) {
+	private void processStartCommand(byte input) {
+		if(input == ServerConst.PLAYER) {
+			board = new Board();
 			gameStarted = true;
-			fileManager.createNewHistory();
-			stockfish.messageWithoutAnswer(EngineConst.NEW_GAME_COMMAND);
+			versusEngine = false;
+			messageToClient(ServerConst.Ok_RESPONSE);
+		} else if (input == ServerConst.ENGINE) {
+			board = new Board();
+			gameStarted = true;
+			versusEngine = true;
 			stockfish.clearMoveHistory();
-			messageToClient(ServerConst.NEW_GAME_RESPONSE);
-		} else if (message.matches(ServerConst.TURN_REGEX) && gameStarted) {
-			engineTurn = stockfish.getTurn(message);
-			fileManager.appendTurnToHistory(message);
-			fileManager.appendTurnToHistory(engineTurn);
-			engineTurn = Decoder.encodeTurn(engineTurn);
-			messageToClient(engineTurn);
-		} else {
-			messageToClient(ServerConst.ERROR_RESPONSE);
+			fileManager.createNewHistory();
+			messageToClient(ServerConst.Ok_RESPONSE);
 		}
+		messageToClient(ServerConst.ERROR_RESPONSE);
+	}
+	
+	private void reset() {
+		if(gameStarted) {
+			board = new Board();
+			stockfish.clearMoveHistory();
+			fileManager.createNewHistory();
+			messageToClient(ServerConst.Ok_RESPONSE);
+		}
+		messageToClient(ServerConst.ERROR_RESPONSE);
+	}
+	
+	private void processTurn(byte[] input) {
+		if(!gameStarted || awaitingAck) {
+			messageToClient(ServerConst.ERROR_RESPONSE);
+			return;
+		}
+		Move playerMove = Decoder.playerTurnToMove(input);
+		byte []boardRetPlayer = board.playerTurn(playerMove);
+		if(boardRetPlayer[0] != LogicConst.ILLEGAL && boardRetPlayer[0] != LogicConst.PROMOTION) {
+			fileManager.appendTurnToHistory(playerMove.toString());
+		}
+		if(boardRetPlayer[0] != LogicConst.ILLEGAL && boardRetPlayer[0] != LogicConst.PROMOTION && versusEngine) {
+			String engineTurn = stockfish.getTurn(playerMove.toString());
+			Move engineMove = Decoder.engineTurnToMove(engineTurn);
+			byte[]boardRetEngine = board.engineTurn(engineMove);
+			fileManager.appendTurnToHistory(engineTurn);
+			messageToClient(boardRetPlayer);
+			messageToClient(boardRetEngine);
+			return;
+		}
+		messageToClient(boardRetPlayer);
+	}
+	
+	private void processPromotionAck(byte figure) {
+		if(!awaitingAck) {
+			messageToClient(ServerConst.ERROR_RESPONSE);
+			return;
+		}
+		awaitingAck = false;
+		byte[] boardRet = board.setPromotedFigure(figure);
+		fileManager.appendTurnToHistory(board.getLastMove().toString());
+		if(versusEngine) {
+			String engineTurn = stockfish.getTurn(board.getLastMove().toString());
+			Move engineMove = Decoder.engineTurnToMove(engineTurn);
+			byte[]boardRetEngine = board.engineTurn(engineMove);
+			fileManager.appendTurnToHistory(engineTurn);
+			messageToClient(boardRet);
+			messageToClient(boardRetEngine);
+			return;
+		}
+		messageToClient(boardRet);
+	}
+	
+	public void processMessage(byte[] input) {
+		String engineTurn;
+		
+		switch(input[0]) {
+		case ServerConst.START:
+			processStartCommand(input[1]);
+			break;
+		case ServerConst.RESET:
+			reset();
+			break;
+		case ServerConst.NEW_TURN:
+			processTurn(input);
+			break;
+		case ServerConst.PROMOTION_ACK:
+			processPromotionAck(input[1]);
+			break;
+		default:
+			messageToClient(ServerConst.ERROR_RESPONSE);
+			break;
+		}
+		
 	}
 
 	public void manageConnection() throws IOException {
@@ -94,15 +145,13 @@ public class SocketManager {
 			System.err.println("Accepted connection from client");
 
 			socketOut = clientSocket.getOutputStream();
-			setupScanner(clientSocket);
-
-			String buffer = "";
-			buffer = readLine();
+			InputStream socketIn = clientSocket.getInputStream();
+			byte[] buffer = new byte[ServerConst.MAX_INPUT_LENGTH];
+			socketIn.read(buffer);
 			processMessage(buffer);
 
 			System.err.println("Closing connection with client");
 			socketOut.close();
-			inputScanner.close();
 			clientSocket.close();
 		}
 

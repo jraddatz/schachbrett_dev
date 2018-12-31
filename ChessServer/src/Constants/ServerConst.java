@@ -3,9 +3,14 @@ package Constants;
 public class ServerConst {
 	
 	public static final int PORT = 3000;
-	public static final String CHARSET_NAME = "UTF-8";
-	public static final String NEW_GAME_RESPONSE = "New Game started";
-	public static final String ERROR_RESPONSE = "Error";
-	public static final String NEW_GAME_MESSAGE = "new";
-	public static final String TURN_REGEX = "[a-h][1-8][a-h][1-8][qrbn]?";
+	public static final byte START = 0b00000001;
+	public static final byte RESET = 0b00000010;
+	public static final byte NEW_TURN = 0b00000100;
+	public static final byte PROMOTION_ACK = 0b00001000;
+	public static final byte[] Ok_RESPONSE = {0b0000000};
+	public static final byte[] ERROR_RESPONSE = {0b1000000};
+	public static final int MAX_INPUT_LENGTH = 20;
+	
+	public static final byte PLAYER = 0;
+	public static final byte ENGINE = 1;
 }
