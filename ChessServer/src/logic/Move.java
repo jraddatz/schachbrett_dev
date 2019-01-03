@@ -1,11 +1,13 @@
 package logic;
 
+import Constants.DecoderConst;
+
 public class Move {
 	private int startRow;
 	private int startColumn;
 	private int endRow;
 	private int endColumn;
-	private byte promotion;
+	private byte promotion = 0;
 	
 	public Move(int startRow, int startColumn, int endRow, int endColumn) {
 		this.startRow = startRow;
@@ -31,5 +33,20 @@ public class Move {
 	}
 	public void setPromotion(byte promotion) {
 		this.promotion = promotion;
+	}
+	
+	@Override
+	public String toString() {
+		String retVal = "";
+		retVal += DecoderConst.FIELD_COLUMN[startColumn];
+		int row = startRow + 1;
+		retVal += row;
+		retVal += DecoderConst.FIELD_COLUMN[endColumn];
+		row = endRow + 1;
+		retVal += row;
+		if(promotion != 0) {
+			retVal += DecoderConst.PROMOTION_MAP_REV.get(promotion);
+		}
+		return retVal;
 	}
 }

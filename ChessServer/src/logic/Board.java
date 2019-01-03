@@ -110,7 +110,7 @@ public class Board {
 		if (retVal[0] != LogicConst.ILLEGAL) {
 			lastMove = move;
 			whitesTurn = !whitesTurn;
-			field[move.getStartRow()][move.getStartColumn()].getFigure().setMoved(true);
+			field[move.getEndRow()][move.getEndColumn()].getFigure().setMoved(true);
 		}
 
 		return retVal;
@@ -222,7 +222,7 @@ public class Board {
 		
 		lastMove = move;
 		whitesTurn = !whitesTurn;
-		field[move.getStartRow()][move.getStartColumn()].getFigure().setMoved(true);
+		field[move.getEndRow()][move.getEndColumn()].getFigure().setMoved(true);
 
 		return retVal;
 	}
@@ -438,17 +438,20 @@ public class Board {
 		if (whiteKingChecked()) {
 			return illegal(move);
 		}
+		setMove(move);
 		whiteKing.setPosition(0, 5);
 		if (whiteKingChecked()) {
+			undoMove(move);
 			whiteKing.setPosition(0, 4);
 			return illegal(move);
 		}
 		whiteKing.setPosition(0, 6);
 		if (whiteKingChecked()) {
+			undoMove(move);
 			whiteKing.setPosition(0, 4);
 			return illegal(move);
 		}
-		setMove(move);
+		
 		Move tmp = new Move(0, 7, 0, 5);
 		setMove(tmp);
 		if (blackKingChecked()) {
@@ -478,17 +481,20 @@ public class Board {
 		if (whiteKingChecked()) {
 			return illegal(move);
 		}
+		setMove(move);
 		whiteKing.setPosition(0, 3);
 		if (whiteKingChecked()) {
+			undoMove(move);
 			whiteKing.setPosition(0, 4);
 			return illegal(move);
 		}
 		whiteKing.setPosition(0, 2);
 		if (whiteKingChecked()) {
+			undoMove(move);
 			whiteKing.setPosition(0, 4);
 			return illegal(move);
 		}
-		setMove(move);
+		
 		Move tmp = new Move(0, 0, 0, 3);
 		setMove(tmp);
 		if (blackKingChecked()) {
@@ -518,17 +524,19 @@ public class Board {
 		if (blackKingChecked()) {
 			return illegal(move);
 		}
+		setMove(move);
 		blackKing.setPosition(7, 5);
 		if (blackKingChecked()) {
-			whiteKing.setPosition(7, 4);
+			blackKing.setPosition(7, 4);
+			undoMove(move);
 			return illegal(move);
 		}
 		blackKing.setPosition(7, 6);
 		if (blackKingChecked()) {
 			blackKing.setPosition(7, 4);
+			undoMove(move);
 			return illegal(move);
 		}
-		setMove(move);
 		Move tmp = new Move(7, 7, 7, 5);
 		setMove(tmp);
 		if (whiteKingChecked()) {
@@ -558,17 +566,19 @@ public class Board {
 		if (blackKingChecked()) {
 			return illegal(move);
 		}
+		setMove(move);
 		blackKing.setPosition(7, 3);
 		if (blackKingChecked()) {
-			whiteKing.setPosition(7, 4);
+			undoMove(move);
+			blackKing.setPosition(7, 4);
 			return illegal(move);
 		}
 		blackKing.setPosition(7, 2);
 		if (blackKingChecked()) {
+			undoMove(move);
 			blackKing.setPosition(7, 4);
 			return illegal(move);
 		}
-		setMove(move);
 		Move tmp = new Move(7, 0, 7, 3);
 		setMove(tmp);
 		if (whiteKingChecked()) {
