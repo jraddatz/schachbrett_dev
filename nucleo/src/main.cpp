@@ -93,10 +93,10 @@ typedef struct {
 
 Mail<coords, 10> communication;
 
-void checker_thread(){
+void checker_thread() {
   static uint8_t change = 0;
   while (true){
-    for(uint8_t y = 0; y < 8; y++){
+    for(uint8_t y = 0; y < 8; y++) {
       change = mcps[y].getChanges(MCP23017_GPIO_PORT_B);  
       if(change){
         coords* pointer = communication.alloc();
@@ -106,7 +106,7 @@ void checker_thread(){
         } else {
           uint8_t x = 0 ;
           while (change){
-            if(change&1){
+            if(change&1) {
               pointer->x = x;
               pointer->y = y;
               communication.put(pointer);
@@ -123,17 +123,28 @@ void checker_thread(){
 
 int main() 
 {
-  //  setup();
+  // setup();
   i2c.frequency(100000);
   resetI2C(); 
   uint8_t a = 0;
   uint8_t x = 0;
   uint8_t errorCode = 0;
   uint8_t change = 0;
+
+  coords buffer[3];
+
   while (1)
   {
+    osEvent evt = communication.get();
+    if(evt.status == osEventMessage) {
+      coords* nextCoord = (coords*) evt.value.p;
+      buffer[0].x = nextCoord->x;
+      buffer[0].y = nextCoord->y;
+    }
+
+    
     change = 0;
-    for(uint8_t y  = 0 ; y < 8 ; y++){
+    for(uint8_t y  = 0 ; y < 8 ; y++) {
       a = mcps[y].readGPIO(MCP23017_GPIO_PORT_B);
       change = mcps[y].getChanges(MCP23017_GPIO_PORT_B);  
       x = 0;
@@ -146,7 +157,7 @@ int main()
       }
 
       errorCode = mcps[y].writeGPIO(MCP23017_GPIO_PORT_A, a ^ 0xff);
-      if(errorCode != 0){
+      if(errorCode != 0) {
         i2c.abort_transfer();
         pc.printf("%d\t%d\n", errorCode, y);
         errorCount++;
