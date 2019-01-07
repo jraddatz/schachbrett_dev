@@ -123,26 +123,64 @@ void checker_thread() {
 
 int main() 
 {
+  //TODO: Setup-Routine?
   // setup();
   i2c.frequency(100000);
   resetI2C(); 
+
+  /**
   uint8_t a = 0;
   uint8_t x = 0;
   uint8_t errorCode = 0;
   uint8_t change = 0;
+  **/
+
+  uint8_t status = constants::START;
 
   coords buffer[3];
-
+  //TODO: Aufräumen?!
   while (1)
   {
     osEvent evt = communication.get();
     if(evt.status == osEventMessage) {
       coords* nextCoord = (coords*) evt.value.p;
-      buffer[0].x = nextCoord->x;
-      buffer[0].y = nextCoord->y;
+      switch(status) {
+        case constants::START:
+          if(true) { //TODO: nextCoord = anheben 
+            buffer[0].x = nextCoord->x;
+            buffer[0].y = nextCoord->y;
+            //TODO: buffer[0]. = nextCoord->
+            
+            status = constants::ONEUP;
+          } else {
+            //TODO: ERROR
+          }
+          break;
+
+        case constants::ONEUP:
+          //TODO: ONEUP-Case
+          break;
+
+        case constants::TWOUP:
+          //TODO: TWOUP-Case
+          break;
+
+        case constants::NORMAL:
+          //TODO: NORMAL-Case (Regulärer Move)
+          break;
+        
+        case constants::TAKES:
+          //TODO: TAKES-Case (Move mit schlagen)
+          break;
+        
+        case constants::WAITING:
+          //TODO: WAITING-Case (Warten auf Serverantwort)
+          break;
+      }
     }
 
     
+    /**
     change = 0;
     for(uint8_t y  = 0 ; y < 8 ; y++) {
       a = mcps[y].readGPIO(MCP23017_GPIO_PORT_B);
@@ -166,5 +204,6 @@ int main()
         resetI2C();
       }
     }
+    **/
   }
 }
