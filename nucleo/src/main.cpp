@@ -160,23 +160,43 @@ int main()
   //TODO: Aufräumen?!
   while (1)
   {
-    osEvent evt = communication.get();
-    if(evt.status == osEventMessage) {
-      coords* nextCoord = (coords*) evt.value.p;
       switch(status) {
         case constants::START:
-          if(true) { //TODO: nextCoord = anheben 
+          osEvent evt = communication.get();
+          if(evt.status == osEventMessage) {
+            coords* nextCoord = (coords*) evt.value.p;
             buffer[0].x = nextCoord->x;
             buffer[0].y = nextCoord->y;
             //TODO: buffer[0]. = nextCoord->
-            
-            status = constants::ONEUP;
-          } else {
-            //TODO: ERROR
+            if(true) { //TODO: buffer[0]. = anheben
+
+              status = constants::ONEUP;
+            } else {
+              //TODO: ERROR
+            }
           }
           break;
 
         case constants::ONEUP:
+          //LEDO: LED(buffer[0].x, buffer[0].y) anmachen
+          osEvent evt = communication.get();
+          if(evt.status == osEventMessage) {
+            coords* nextCoord = (coords*) evt.value.p;
+            buffer[1].x = nextCoord->x;
+            buffer[1].y = nextCoord->y;
+            //TODO: buffer[1]. = nextCoord->
+            if(true) { //TODO: nextCoord = anheben 
+              
+              status = constants::TWOUP;
+            } else {
+              if(buffer[0].x == buffer[1].x && buffer[0].y == buffer[1].y) {
+                //LEDO: LEDs off
+                status = constants::START;
+              } else {
+                status = constants::NORMAL;
+              }
+            }
+          }
           //TODO: ONEUP-Case
           break;
 
@@ -197,6 +217,7 @@ int main()
           break;
       }
     }
+
 
     
     /**
