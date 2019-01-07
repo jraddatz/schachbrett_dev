@@ -10,6 +10,14 @@ Serial pc(USBTX, USBRX); // tx, rx
 I2C i2c(PB_9, PB_8);
 DigitalOut notReset ( PG_1 );
 
+void ledOn(uint8_t x, uint8_t y){
+  if(x >= 8 || y >= 8){
+    return ;
+  }
+
+  uint8_t a = mcps[y].readGPIO(MCP23017_GPIO_PORT_A);
+  mcps[y].writeGPIO(MCP23017_GPIO_PORT_A, a | 1 << x );
+}
 void scanI2c(I2C &ic)
 {
   char pointer[1] = {0};
