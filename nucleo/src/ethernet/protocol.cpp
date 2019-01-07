@@ -28,10 +28,10 @@ void ServerProtocol::stopGame()
 {
 }
 
-void ServerProtocol::nextTurn(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, char newFigur)
+void ServerProtocol::nextTurn(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, char newFigure)
 {
-    char buffer[4] = { protocol::turn,
+    char buffer[4] = { protocol::TURN,
                       convertTo(x1, y1),
                       convertTo(x2, y2),
-                      newFigur };
+                      newFigure };
 }
