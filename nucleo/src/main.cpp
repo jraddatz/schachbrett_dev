@@ -9,6 +9,16 @@
 Serial pc(USBTX, USBRX); // tx, rx
 I2C i2c(PB_9, PB_8);
 DigitalOut notReset ( PG_1 );
+uint8_t errorCode = 0;
+
+TextLCD lcd(PG_2, PG_3, PD_7, PD_6, PD_5, PD_4); 
+
+MCP23017 mcps[8] = {
+  MCP23017(0 , i2c ),MCP23017(1 , i2c ),
+  MCP23017(2 , i2c ),MCP23017(3 , i2c ),
+  MCP23017(4 , i2c ),MCP23017(5 , i2c ),
+  MCP23017(6 , i2c ),MCP23017(7 , i2c )
+};
 
 void ledOn(uint8_t x, uint8_t y){
   if(x >= 8 || y >= 8){
@@ -77,16 +87,6 @@ void ethernetEchoExample(){
   pc.printf("Done\n");
 }
 
-//            rs, e   , d4  , d5  , d6  , d7
-TextLCD lcd(PG_2, PG_3, PD_7, PD_6, PD_5, PD_4); 
-
-MCP23017 mcps[8] = {
-  MCP23017(0 , i2c ),MCP23017(1 , i2c ),
-  MCP23017(2 , i2c ),MCP23017(3 , i2c ),
-  MCP23017(4 , i2c ),MCP23017(5 , i2c ),
-  MCP23017(6 , i2c ),MCP23017(7 , i2c )
-};
-
 void resetI2C(){
   notReset = 0;
   wait_ms(1);
@@ -150,19 +150,18 @@ int main()
   /**
   uint8_t a = 0;
   uint8_t x = 0;
-  uint8_t errorCode = 0;
   uint8_t change = 0;
   **/
 
   uint8_t status = constants::START;
-
+  osEvent evt;
   coords buffer[3];
   //TODO: Aufräumen?!
   while (1)
   {
       switch(status) {
         case constants::START:
-          osEvent evt = communication.get();
+          evt = communication.get();
           if(evt.status == osEventMessage) {
             coords* nextCoord = (coords*) evt.value.p;
             buffer[0].x = nextCoord->x;
@@ -178,8 +177,8 @@ int main()
           break;
 
         case constants::ONEUP:
-          //LEDO: LED(buffer[0].x, buffer[0].y) anmachen
-          osEvent evt = communication.get();
+          ledOn(buffer[0].x, buffer[0].y);
+          evt = communication.get();
           if(evt.status == osEventMessage) {
             coords* nextCoord = (coords*) evt.value.p;
             buffer[1].x = nextCoord->x;
@@ -245,5 +244,4 @@ int main()
       }
     }
     **/
-  }
 }
