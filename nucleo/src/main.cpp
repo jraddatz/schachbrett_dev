@@ -153,6 +153,13 @@ int main()
   uint8_t change = 0;
   **/
 
+  //TODO: Hier sinnvoll? Wo Verbindung und eth-int schließen?
+  EthernetInterface net;
+  net.connect();
+  TCPSocket socket;
+  socket.open(&net);
+  socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
+
   uint8_t status = constants::START;
   osEvent evt;
   coords buffer[3];
@@ -166,8 +173,8 @@ int main()
             coords* nextCoord = (coords*) evt.value.p;
             buffer[0].x = nextCoord->x;
             buffer[0].y = nextCoord->y;
-            //TODO: buffer[0]. = nextCoord->
-            if(true) { //TODO: buffer[0]. = anheben
+            //TODO: buffer[0].up = nextCoord->up;
+            if(true) { //TODO: if(buffer[0].up) {
 
               status = constants::ONEUP;
             } else {
@@ -183,16 +190,16 @@ int main()
             coords* nextCoord = (coords*) evt.value.p;
             buffer[1].x = nextCoord->x;
             buffer[1].y = nextCoord->y;
-            //TODO: buffer[1]. = nextCoord->
-            if(true) { //TODO: nextCoord = anheben 
+            //TODO: buffer[1].up = nextCoord->up;
+            if(true) { //TODO: if(buffer[1].up) {
               
               status = constants::TWOUP;
             } else {
               if(buffer[0].x == buffer[1].x && buffer[0].y == buffer[1].y) {
-                //LEDO: LEDs off
+                ledsOff();
                 status = constants::START;
               } else {
-                status = constants::NORMAL;
+                status = constants::SEND;
               }
             }
           }
@@ -200,18 +207,153 @@ int main()
           break;
 
         case constants::TWOUP:
+          //TODO: Evtl. blinken?
+          ledOn(buffer[1].x, buffer[1].y);
+          evt = communication.get();
+          if(evt.status == osEventMessage) {
+            coords* nextCoord = (coords*) evt.value.p;
+            buffer[2].x = nextCoord->x;
+            buffer[2].y = nextCoord->y;
+            //TODO: buffer[2].up = nextCoord->up;
+            if(true) { //TODO: if(buffer[2].up) { 
+              //TODO: ERROR
+            } else {
+              if(buffer[1].x == buffer[2].x && buffer[1].y == buffer[2].y) {
+                //TODO: Abfrage nötig?
+                status = constants::SEND;
+              } else {
+                //TODO: Error, oder nicht? s.o.
+              }
+            }
+          }
           //TODO: TWOUP-Case
           break;
 
-        case constants::NORMAL:
-          //TODO: NORMAL-Case (Regulärer Move)
-          break;
+        case constants::SEND:
+          //TODO: Buffer füllen und senden
+          // protocol::TURN + x1 + y1 + x2 + y2
+          //sbuffer = "4";
+          //socket.send(sbuffer, sizeof sbuffer);
         
-        case constants::TAKES:
-          //TODO: TAKES-Case (Move mit schlagen)
+          status = constants::WAITING;
+          //TODO: SEND-Case (Regulärer Move)
           break;
         
         case constants::WAITING:
+          ledsOff();
+
+          char rbuffer[64];
+          int rcount = socket.recv(rbuffer, sizeof rbuffer);
+          int offset = 0;
+          if(!(rbuffer[0] & protocol::ERROR)) {
+            if(!(rbuffer[0] & protocol::ILLEGAL)) {
+              if(rbuffer[0] & protocol::CASTLING) {
+                ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+                ledOn(rbuffer[3 + offset], rbuffer[4 + offset]);
+                //LCDO
+                //TODO: Wait for 1 up and 2 down
+                offset += 4;
+              }
+
+              if(rbuffer[0] & protocol::ENPASSANT) {
+                ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+                offset += 2;
+                //LCDO
+                //TODO: Wait for 1 up
+              }
+
+              if(rbuffer[0] & protocol::PROMOTION) {
+                ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+                offset += 2;
+
+                //TODO: Promotion
+              }
+
+              if(rbuffer[0] & protocol::CHECK) {
+                ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+                offset += 2;
+              }
+
+              if(rbuffer[0] & protocol::CHECKMATE) {
+                ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+
+                //TODO: End of game!
+              }
+
+              //TODO: Evtl. Delay vor dem AI-Move?
+
+              ledsOff();
+              
+              if(rbuffer[1 + offset] & protocol::ILLEGAL) {
+                ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
+                ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
+                offset += 4;
+
+                //LCDO
+                //TODO: Wait for 1 up and 2 down
+              }
+
+              if(rbuffer[1 + offset] & protocol::CASTLING) {
+                ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
+                ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
+                ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
+                ledOn(rbuffer[8 + offset], rbuffer[9 + offset]);
+                offset += 8;
+                
+                //LCDO
+                //TODO: Wait for 1 up and 2 down, 3 up and 4 down
+              }
+
+              if(rbuffer[1 + offset] & protocol::ENPASSANT) {
+                ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
+                ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
+                ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
+                offset += 6;
+                
+                //LCDO
+                //TODO: Wait for 1 up and 2 down, 3 up
+              }
+
+              if(rbuffer[1 + offset] & protocol::PROMOTION) {
+                ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
+                ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
+                offset += 4;
+
+                //LCDO
+                //TODO: Wait for 1 up and 2 down, 2 up and 2 down
+              }
+
+              if(rbuffer[1 + offset] & protocol::CHECK) {
+                //TODO: An welcher Stelle steht die Position des Kings?
+                ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
+                ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
+                ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
+
+                //LCDO
+                //TODO: Wait for 1 up and 2 down
+
+              }
+
+              if(rbuffer[1 + offset] & protocol::CHECKMATE) {
+                //TODO: An welcher Stelle steht die Position des Kings?
+                ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
+                ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
+                ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
+
+                //LCDO
+                //TODO: Wait for 1 up and 2 down
+              }
+
+            } else {
+              ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+              ledOn(rbuffer[3 + offset], rbuffer[4 + offset]);
+              //TODO: Wait for 1 up, 2 down
+            }
+          } else {
+            //TODO: ERROR
+          }
+
+          status = constants::START;
           //TODO: WAITING-Case (Warten auf Serverantwort)
           break;
       }

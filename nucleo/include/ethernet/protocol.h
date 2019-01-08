@@ -7,7 +7,7 @@
 
 namespace protocol {
     enum Commands {
-        START = 1, RESET = 2, TURN = 4, ENPASSANT = 4, PROMOTION = 8, CHECK = 16, CHECKMATE = 32, OK = 64, ERROR = 128
+        START = 1, RESET = 2, CASTLING = 2, TURN = 4, ENPASSANT = 4, PROMOTION = 8, CHECK = 16, CHECKMATE = 32, ILLEGAL = 64, ERROR = 128
     };
     
     enum FigureChar {
