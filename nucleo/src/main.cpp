@@ -108,6 +108,7 @@ void printError (uint8_t mcpID){
 typedef struct {
   uint8_t x;
   uint8_t y;
+  bool up;
 } coords;
 
 Mail<coords, 10> communication;
