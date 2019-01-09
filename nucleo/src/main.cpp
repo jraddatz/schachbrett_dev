@@ -157,15 +157,20 @@ bool addPendingMove(uint8_t x, uint8_t y, bool up) {
   
   if(pointer == NULL){
     // not enough memory available
+    return false;
   } else {
     pointer->x = x;
     pointer->y = y;
-    //TODO: pointer->up = up;
+    pointer->up = up;
     pendingMoves.put(pointer);
   }
+  return true;
 }
 
 char sendBuffer[5];
+int offset;
+char rbuffer[64];
+int rcount;
 
 int main() 
 {
@@ -192,8 +197,8 @@ int main()
             coords* nextCoord = (coords*) evtCommunication.value.p;
             bufferPlayerMoves[0].x = nextCoord->x;
             bufferPlayerMoves[0].y = nextCoord->y;
-            //TODO: bufferPlayerMoves[0].up = nextCoord->up;
-            if(true) { //TODO: if(bufferPlayerMoves[0].up) {
+            bufferPlayerMoves[0].up = nextCoord->up;
+            if(bufferPlayerMoves[0].up) {
 
               status = constants::ONEUP;
             } else {
@@ -211,8 +216,8 @@ int main()
             coords* nextCoord = (coords*) evtCommunication.value.p;
             bufferPlayerMoves[1].x = nextCoord->x;
             bufferPlayerMoves[1].y = nextCoord->y;
-            //TODO: bufferPlayerMoves[1].up = nextCoord->up;
-            if(true) { //TODO: if(bufferPlayerMoves[1].up) {
+            bufferPlayerMoves[1].up = nextCoord->up;
+            if(bufferPlayerMoves[1].up) {
               
               status = constants::TWOUP;
             } else {
@@ -235,8 +240,8 @@ int main()
             coords* nextCoord = (coords*) evtCommunication.value.p;
             bufferPlayerMoves[2].x = nextCoord->x;
             bufferPlayerMoves[2].y = nextCoord->y;
-            //TODO: bufferPlayerMoves[2].up = nextCoord->up;
-            if(true) { //TODO: if(bufferPlayerMoves[2].up) { 
+            bufferPlayerMoves[2].up = nextCoord->up;
+            if(bufferPlayerMoves[2].up) { 
               addPendingMove(bufferPlayerMoves[2].x, bufferPlayerMoves[2].y, !bufferPlayerMoves[2].up);
               addPendingMove(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, !bufferPlayerMoves[1].up);              
               addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
@@ -276,11 +281,10 @@ int main()
         case constants::WAITINGSERVER:
           ledsOff();
 
-          char rbuffer[64];
-          int rcount = socket.recv(rbuffer, sizeof rbuffer);
+          rcount = socket.recv(rbuffer, sizeof rbuffer);
           socket.close();
 
-          int offset = 0;
+          offset = 0;
           if(!(rbuffer[0] & protocol::ERROR)) {
             if(!(rbuffer[0] & protocol::ILLEGAL)) {
               if(rbuffer[0] & protocol::CASTLING) {
@@ -422,7 +426,7 @@ int main()
                 evtCommunication = communication.get();
                 if(evtPendingMoves.status == osEventMessage) {
                   coords* nextMade = (coords*) evtPendingMoves.value.p;
-                  if(!(nextPending.x == nextMade.x && nextPending.y == nextMade.y && nextPending.up == nextMade.up)) {
+                  if(!(nextPending->x == nextMade->x && nextPending->y == nextMade->y && nextPending->up == nextMade->up)) {
                     //TODO: ERROR - Spieler hat falschen Move gemacht
                   }
                   moveMade = true;
