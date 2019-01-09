@@ -186,13 +186,28 @@ int main()
   net.connect();
   TCPSocket socket;
 
-  uint8_t status = constants::INITBOARD;
+  uint8_t status = constants::START;
   osEvent evtCommunication;
   osEvent evtPendingMoves;
   coords bufferPlayerMoves[3];
+
+  coords* pointer = communication.alloc();
+  pointer->x = 1;
+  pointer->y = 1;
+  pointer->up = true;
+  communication.put(pointer);
+
+  coords* pointer2 = communication.alloc();
+  pointer2->x = 1;
+  pointer2->y = 2;
+  pointer2->up = false;
+  communication.put(pointer2);
+
   //TODO: Aufräumen?!
   while (1)
   {
+      lcd.cls();
+      lcd.printf("Hallo Jendrik");
       switch(status) {
         case constants::INITBOARD:
           for(uint8_t y = 0; y < 8; y++) {
