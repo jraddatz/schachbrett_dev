@@ -192,6 +192,7 @@ int main()
   {
       switch(status) {
         case constants::START:
+          printf("Start\n");
           evtCommunication = communication.get();
           if(evtCommunication.status == osEventMessage) {
             coords* nextCoord = (coords*) evtCommunication.value.p;
@@ -210,6 +211,7 @@ int main()
           break;
 
         case constants::ONEUP:
+          printf("Oneup\n");
           ledOn(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y);
           evtCommunication = communication.get();
           if(evtCommunication.status == osEventMessage) {
@@ -233,6 +235,7 @@ int main()
           break;
 
         case constants::TWOUP:
+          printf("Twoup\n");
           //TODO: Evtl. blinken?
           ledOn(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
           evtCommunication = communication.get();
@@ -265,6 +268,7 @@ int main()
           break;
 
         case constants::SEND:
+          printf("Send\n");
           socket.open(&net);
           socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
 
@@ -279,6 +283,7 @@ int main()
           break;
         
         case constants::WAITINGSERVER:
+          printf("Waitingserver\n");
           ledsOff();
 
           rcount = socket.recv(rbuffer, sizeof rbuffer);
@@ -418,6 +423,7 @@ int main()
           break;
 
         case constants::WAITINGPLAYER:
+          printf("Waitingplayer\n");
           evtPendingMoves = pendingMoves.get();
           while(evtPendingMoves.status == osEventMessage) {
             coords* nextPending = (coords*) evtPendingMoves.value.p;
