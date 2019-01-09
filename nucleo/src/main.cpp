@@ -124,10 +124,10 @@ Mail<coords, 10> communication;
 void checker_thread() {
   static uint8_t change = 0;
   while (true){
-    printf("Checker");
     for(uint8_t y = 0; y < 8; y++) {
       change = mcps[y].getChanges(MCP23017_GPIO_PORT_B);  
       if(change){
+        printf("Checker");
         coords* pointer = communication.alloc();
         
         if(pointer == NULL){
@@ -135,7 +135,7 @@ void checker_thread() {
         } else {
           uint8_t a = mcps[y].readGPIO(MCP23017_GPIO_PORT_B);
           uint8_t x = 0 ;
-          while (change){
+          while (change) {
             if(change&1) {
               pointer->x = x;
               pointer->y = y;
@@ -186,26 +186,36 @@ int main()
   net.connect();
   TCPSocket socket;
 
-  uint8_t status = constants::START;
+  uint8_t status = constants::INITBOARD;
   osEvent evtCommunication;
   osEvent evtPendingMoves;
   coords bufferPlayerMoves[3];
-  thread.start(checker_thread);
   //TODO: Aufräumen?!
   while (1)
   {
       switch(status) {
+        case constants::INITBOARD:
+          for(uint8_t y = 0; y < 8; y++) {
+            mcps[y].getChanges(MCP23017_GPIO_PORT_B); 
+          }
+          //TODO: Thread nur einmal starten
+          //if(thread.get_state() != Thread::Running) {
+            thread.start(checker_thread);
+          //}
+          status = constants::START;
+          break; 
         case constants::START:
           printf("Start\n");
-          evtCommunication = communication.get(10);
+          evtCommunication = communication.get();
           printf("StartAfterGet\n");
-          if(evtCommunication.status == osEventMessage) {
+          if(evtCommunication.status == osEventMail) {
+            printf("StartAfterChange\n");
             coords* nextCoord = (coords*) evtCommunication.value.p;
             bufferPlayerMoves[0].x = nextCoord->x;
             bufferPlayerMoves[0].y = nextCoord->y;
             bufferPlayerMoves[0].up = nextCoord->up;
+            communication.free(nextCoord);
             if(bufferPlayerMoves[0].up) {
-
               status = constants::ONEUP;
             } else {
               addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
@@ -219,11 +229,12 @@ int main()
           printf("Oneup\n");
           ledOn(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y);
           evtCommunication = communication.get();
-          if(evtCommunication.status == osEventMessage) {
+          if(evtCommunication.status == osEventMail) {
             coords* nextCoord = (coords*) evtCommunication.value.p;
             bufferPlayerMoves[1].x = nextCoord->x;
             bufferPlayerMoves[1].y = nextCoord->y;
             bufferPlayerMoves[1].up = nextCoord->up;
+            communication.free(nextCoord);
             if(bufferPlayerMoves[1].up) {
               
               status = constants::TWOUP;
@@ -244,11 +255,12 @@ int main()
           //TODO: Evtl. blinken?
           ledOn(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
           evtCommunication = communication.get();
-          if(evtCommunication.status == osEventMessage) {
+          if(evtCommunication.status == osEventMail) {
             coords* nextCoord = (coords*) evtCommunication.value.p;
             bufferPlayerMoves[2].x = nextCoord->x;
             bufferPlayerMoves[2].y = nextCoord->y;
             bufferPlayerMoves[2].up = nextCoord->up;
+            communication.free(nextCoord);
             if(bufferPlayerMoves[2].up) { 
               addPendingMove(bufferPlayerMoves[2].x, bufferPlayerMoves[2].y, !bufferPlayerMoves[2].up);
               addPendingMove(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, !bufferPlayerMoves[1].up);              
@@ -430,12 +442,12 @@ int main()
         case constants::WAITINGPLAYER:
           printf("Waitingplayer\n");
           evtPendingMoves = pendingMoves.get();
-          while(evtPendingMoves.status == osEventMessage) {
+          while(evtPendingMoves.status == osEventMail) {
             coords* nextPending = (coords*) evtPendingMoves.value.p;
               bool moveMade = false;
               while(!moveMade) {
                 evtCommunication = communication.get();
-                if(evtPendingMoves.status == osEventMessage) {
+                if(evtPendingMoves.status == osEventMail) {
                   coords* nextMade = (coords*) evtPendingMoves.value.p;
                   if(!(nextPending->x == nextMade->x && nextPending->y == nextMade->y && nextPending->up == nextMade->up)) {
                     //TODO: ERROR - Spieler hat falschen Move gemacht
