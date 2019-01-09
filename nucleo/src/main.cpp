@@ -20,6 +20,14 @@ MCP23017 mcps[8] = {
   MCP23017(6 , i2c ),MCP23017(7 , i2c )
 };
 
+/**
+ * TODO: Funktion um x,y Koordinaten in String umzuformen
+char[] stringifyCoords(uint8_t x, uint8_t y) {
+  char retCoords[] = constants::FIELDS[x] + (y + 1);
+  return retCoords;
+}
+**/
+
 void ledOn(uint8_t x, uint8_t y){
   if(x >= 8 || y >= 8){
     return ;
@@ -140,6 +148,22 @@ void checker_thread() {
   }
 }
 
+Mail<coords, 10> pendingMoves;
+
+bool addPendingMove(uint8_t x, uint8_t y, bool up) {
+  coords* pointer = pendingMoves.alloc();
+  
+  if(pointer == NULL){
+    // not enough memory available
+  } else {
+    pointer->x = x;
+    pointer->y = y;
+    //TODO: pointer->up = up;
+    pendingMoves.put(pointer);
+  }
+}
+
+char sendBuffer[5];
 
 int main() 
 {
@@ -148,55 +172,49 @@ int main()
   i2c.frequency(100000);
   resetI2C(); 
 
-  /**
-  uint8_t a = 0;
-  uint8_t x = 0;
-  uint8_t change = 0;
-  **/
-
-  //TODO: Hier sinnvoll? Wo Verbindung und eth-int schließen?
   EthernetInterface net;
   net.connect();
   TCPSocket socket;
-  socket.open(&net);
-  socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
 
   uint8_t status = constants::START;
-  osEvent evt;
-  coords buffer[3];
+  osEvent evtCommunication;
+  osEvent evtPendingMoves;
+  coords bufferPlayerMoves[3];
   //TODO: Aufräumen?!
   while (1)
   {
       switch(status) {
         case constants::START:
-          evt = communication.get();
-          if(evt.status == osEventMessage) {
-            coords* nextCoord = (coords*) evt.value.p;
-            buffer[0].x = nextCoord->x;
-            buffer[0].y = nextCoord->y;
-            //TODO: buffer[0].up = nextCoord->up;
-            if(true) { //TODO: if(buffer[0].up) {
+          evtCommunication = communication.get();
+          if(evtCommunication.status == osEventMessage) {
+            coords* nextCoord = (coords*) evtCommunication.value.p;
+            bufferPlayerMoves[0].x = nextCoord->x;
+            bufferPlayerMoves[0].y = nextCoord->y;
+            //TODO: bufferPlayerMoves[0].up = nextCoord->up;
+            if(true) { //TODO: if(bufferPlayerMoves[0].up) {
 
               status = constants::ONEUP;
             } else {
-              //TODO: ERROR
+              addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
+              //LCDO Fehlerhaften Move zurücksetzen
+              status = constants::WAITINGPLAYER;
             }
           }
           break;
 
         case constants::ONEUP:
-          ledOn(buffer[0].x, buffer[0].y);
-          evt = communication.get();
-          if(evt.status == osEventMessage) {
-            coords* nextCoord = (coords*) evt.value.p;
-            buffer[1].x = nextCoord->x;
-            buffer[1].y = nextCoord->y;
-            //TODO: buffer[1].up = nextCoord->up;
-            if(true) { //TODO: if(buffer[1].up) {
+          ledOn(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y);
+          evtCommunication = communication.get();
+          if(evtCommunication.status == osEventMessage) {
+            coords* nextCoord = (coords*) evtCommunication.value.p;
+            bufferPlayerMoves[1].x = nextCoord->x;
+            bufferPlayerMoves[1].y = nextCoord->y;
+            //TODO: bufferPlayerMoves[1].up = nextCoord->up;
+            if(true) { //TODO: if(bufferPlayerMoves[1].up) {
               
               status = constants::TWOUP;
             } else {
-              if(buffer[0].x == buffer[1].x && buffer[0].y == buffer[1].y) {
+              if(bufferPlayerMoves[0].x == bufferPlayerMoves[1].x && bufferPlayerMoves[0].y == bufferPlayerMoves[1].y) {
                 ledsOff();
                 status = constants::START;
               } else {
@@ -209,21 +227,30 @@ int main()
 
         case constants::TWOUP:
           //TODO: Evtl. blinken?
-          ledOn(buffer[1].x, buffer[1].y);
-          evt = communication.get();
-          if(evt.status == osEventMessage) {
-            coords* nextCoord = (coords*) evt.value.p;
-            buffer[2].x = nextCoord->x;
-            buffer[2].y = nextCoord->y;
-            //TODO: buffer[2].up = nextCoord->up;
-            if(true) { //TODO: if(buffer[2].up) { 
-              //TODO: ERROR
+          ledOn(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
+          evtCommunication = communication.get();
+          if(evtCommunication.status == osEventMessage) {
+            coords* nextCoord = (coords*) evtCommunication.value.p;
+            bufferPlayerMoves[2].x = nextCoord->x;
+            bufferPlayerMoves[2].y = nextCoord->y;
+            //TODO: bufferPlayerMoves[2].up = nextCoord->up;
+            if(true) { //TODO: if(bufferPlayerMoves[2].up) { 
+              addPendingMove(bufferPlayerMoves[2].x, bufferPlayerMoves[2].y, !bufferPlayerMoves[2].up);
+              addPendingMove(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, !bufferPlayerMoves[1].up);              
+              addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
+
+              //LCDO Fehlerhaften Move zurücksetzen
+              status = constants::WAITINGPLAYER;
             } else {
-              if(buffer[1].x == buffer[2].x && buffer[1].y == buffer[2].y) {
-                //TODO: Abfrage nötig?
+              if(bufferPlayerMoves[1].x == bufferPlayerMoves[2].x && bufferPlayerMoves[1].y == bufferPlayerMoves[2].y) {
                 status = constants::SEND;
               } else {
-                //TODO: Error, oder nicht? s.o.
+                addPendingMove(bufferPlayerMoves[2].x, bufferPlayerMoves[2].y, !bufferPlayerMoves[2].up);
+                addPendingMove(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, !bufferPlayerMoves[1].up);
+                addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
+
+                //LCDO Fehlerhaften Move zurücksetzen
+                status = constants::WAITINGPLAYER;
               }
             }
           }
@@ -231,20 +258,26 @@ int main()
           break;
 
         case constants::SEND:
-          //TODO: Buffer füllen und senden
-          // protocol::TURN + x1 + y1 + x2 + y2
-          //sbuffer = "4";
-          //socket.send(sbuffer, sizeof sbuffer);
+          socket.open(&net);
+          socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
+
+          sendBuffer[0] = protocol::TURN;
+          sendBuffer[1] = bufferPlayerMoves[0].x;
+          sendBuffer[2] = bufferPlayerMoves[0].y; 
+          sendBuffer[1] = bufferPlayerMoves[1].x;
+          sendBuffer[1] = bufferPlayerMoves[1].y;
+          socket.send(sendBuffer, sizeof sendBuffer);
         
-          status = constants::WAITING;
-          //TODO: SEND-Case (Regulärer Move)
+          status = constants::WAITINGSERVER;
           break;
         
-        case constants::WAITING:
+        case constants::WAITINGSERVER:
           ledsOff();
 
           char rbuffer[64];
           int rcount = socket.recv(rbuffer, sizeof rbuffer);
+          socket.close();
+
           int offset = 0;
           if(!(rbuffer[0] & protocol::ERROR)) {
             if(!(rbuffer[0] & protocol::ILLEGAL)) {
@@ -252,15 +285,18 @@ int main()
                 ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
                 ledOn(rbuffer[3 + offset], rbuffer[4 + offset]);
                 //LCDO
-                //TODO: Wait for 1 up and 2 down
+
+                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
                 offset += 4;
               }
 
               if(rbuffer[0] & protocol::ENPASSANT) {
                 ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+
+                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
                 offset += 2;
                 //LCDO
-                //TODO: Wait for 1 up
               }
 
               if(rbuffer[0] & protocol::PROMOTION) {
@@ -285,13 +321,19 @@ int main()
 
               ledsOff();
               
+              // ***************************************************
+              // Ab hier AI-Move
+              // ***************************************************
               if(rbuffer[1 + offset] & protocol::ILLEGAL) {
                 ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
                 ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
+
+                addPendingMove(rbuffer[2 + offset], rbuffer[3 + offset], constants::UP);
+                addPendingMove(rbuffer[4 + offset], rbuffer[5 + offset], constants::DOWN);
+
                 offset += 4;
 
-                //LCDO
-                //TODO: Wait for 1 up and 2 down
+                //LCDO 
               }
 
               if(rbuffer[1 + offset] & protocol::CASTLING) {
@@ -299,92 +341,96 @@ int main()
                 ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
                 ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
                 ledOn(rbuffer[8 + offset], rbuffer[9 + offset]);
+
+                addPendingMove(rbuffer[2 + offset], rbuffer[3 + offset], constants::UP);
+                addPendingMove(rbuffer[4 + offset], rbuffer[5 + offset], constants::DOWN);
+                addPendingMove(rbuffer[6 + offset], rbuffer[7 + offset], constants::UP);
+                addPendingMove(rbuffer[8 + offset], rbuffer[9 + offset], constants::DOWN);
+
                 offset += 8;
                 
                 //LCDO
-                //TODO: Wait for 1 up and 2 down, 3 up and 4 down
               }
 
               if(rbuffer[1 + offset] & protocol::ENPASSANT) {
                 ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
                 ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
                 ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
+
+                addPendingMove(rbuffer[2 + offset], rbuffer[3 + offset], constants::UP);
+                addPendingMove(rbuffer[4 + offset], rbuffer[5 + offset], constants::DOWN);
+                addPendingMove(rbuffer[6 + offset], rbuffer[7 + offset], constants::UP);
+
                 offset += 6;
                 
                 //LCDO
-                //TODO: Wait for 1 up and 2 down, 3 up
               }
 
               if(rbuffer[1 + offset] & protocol::PROMOTION) {
                 ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
                 ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
-                offset += 4;
 
+                addPendingMove(rbuffer[2 + offset], rbuffer[3 + offset], constants::UP);
+                addPendingMove(rbuffer[4 + offset], rbuffer[5 + offset], constants::DOWN);
+                addPendingMove(rbuffer[4 + offset], rbuffer[5 + offset], constants::UP);
+                addPendingMove(rbuffer[4 + offset], rbuffer[5 + offset], constants::DOWN);                
+                
+                offset += 4;                
+                
                 //LCDO
-                //TODO: Wait for 1 up and 2 down, 2 up and 2 down
               }
 
               if(rbuffer[1 + offset] & protocol::CHECK) {
-                //TODO: An welcher Stelle steht die Position des Kings?
-                ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
-                ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
                 ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
 
                 //LCDO
-                //TODO: Wait for 1 up and 2 down
-
               }
 
               if(rbuffer[1 + offset] & protocol::CHECKMATE) {
-                //TODO: An welcher Stelle steht die Position des Kings?
-                ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
-                ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
                 ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
 
                 //LCDO
-                //TODO: Wait for 1 up and 2 down
+                //TODO: End of Game
               }
 
             } else {
+              //Illegal Playermove
               ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
               ledOn(rbuffer[3 + offset], rbuffer[4 + offset]);
-              //TODO: Wait for 1 up, 2 down
+
+              addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+              addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
+
+              //LCDO
             }
           } else {
-            //TODO: ERROR
+            //TODO: ERROR - Fehlerbit vom Server gesetzt
+          }
+
+          status = constants::WAITINGPLAYER;
+          //TODO: WAITINGSERVER-Case (Warten auf Serverantwort)
+          break;
+
+        case constants::WAITINGPLAYER:
+          evtPendingMoves = pendingMoves.get();
+          while(evtPendingMoves.status == osEventMessage) {
+            coords* nextPending = (coords*) evtPendingMoves.value.p;
+              bool moveMade = false;
+              while(!moveMade) {
+                evtCommunication = communication.get();
+                if(evtPendingMoves.status == osEventMessage) {
+                  coords* nextMade = (coords*) evtPendingMoves.value.p;
+                  if(!(nextPending.x == nextMade.x && nextPending.y == nextMade.y && nextPending.up == nextMade.up)) {
+                    //TODO: ERROR - Spieler hat falschen Move gemacht
+                  }
+                  moveMade = true;
+                }
+              }
+            evtPendingMoves = pendingMoves.get();
           }
 
           status = constants::START;
-          //TODO: WAITING-Case (Warten auf Serverantwort)
-          break;
+        break;
       }
     }
-
-
-    
-    /**
-    change = 0;
-    for(uint8_t y  = 0 ; y < 8 ; y++) {
-      a = mcps[y].readGPIO(MCP23017_GPIO_PORT_B);
-      change = mcps[y].getChanges(MCP23017_GPIO_PORT_B);  
-      x = 0;
-      while (change != 0) {
-        if(change & 1){
-          // manager.?(x,i)
-        }  
-        x++;
-        change >>= 1;
-      }
-
-      errorCode = mcps[y].writeGPIO(MCP23017_GPIO_PORT_A, a ^ 0xff);
-      if(errorCode != 0) {
-        i2c.abort_transfer();
-        pc.printf("%d\t%d\n", errorCode, y);
-        errorCount++;
-        printError(y);
-        //mcps[i].reset();
-        resetI2C();
-      }
-    }
-    **/
 }
