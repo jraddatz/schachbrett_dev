@@ -124,6 +124,7 @@ Mail<coords, 10> communication;
 void checker_thread() {
   static uint8_t change = 0;
   while (true){
+    printf("Checker");
     for(uint8_t y = 0; y < 8; y++) {
       change = mcps[y].getChanges(MCP23017_GPIO_PORT_B);  
       if(change){
@@ -147,6 +148,7 @@ void checker_thread() {
         }
       }
     }
+    wait(0.1);
   }
 }
 
@@ -171,6 +173,7 @@ char sendBuffer[5];
 int offset;
 char rbuffer[64];
 int rcount;
+Thread thread;
 
 int main() 
 {
@@ -187,6 +190,7 @@ int main()
   osEvent evtCommunication;
   osEvent evtPendingMoves;
   coords bufferPlayerMoves[3];
+  thread.start(checker_thread);
   //TODO: Aufräumen?!
   while (1)
   {
