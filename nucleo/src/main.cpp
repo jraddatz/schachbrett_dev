@@ -453,6 +453,9 @@ int main()
                     //TODO: ERROR - Spieler hat falschen Move gemacht
                   }
                   moveMade = true;
+
+                  pendingMoves.free(nextPending);
+                  communication.free(nextMade);
                 }
               }
             evtPendingMoves = pendingMoves.get();
