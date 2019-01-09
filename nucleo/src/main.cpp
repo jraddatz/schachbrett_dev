@@ -132,11 +132,13 @@ void checker_thread() {
         if(pointer == NULL){
           // not enough memory available
         } else {
+          uint8_t a = mcps[y].readGPIO(MCP23017_GPIO_PORT_B);
           uint8_t x = 0 ;
           while (change){
             if(change&1) {
               pointer->x = x;
               pointer->y = y;
+              pointer->up = (a & 1 << x) == 0;
               communication.put(pointer);
             }
             x++;
