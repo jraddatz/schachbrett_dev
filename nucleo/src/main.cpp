@@ -197,7 +197,8 @@ int main()
       switch(status) {
         case constants::START:
           printf("Start\n");
-          evtCommunication = communication.get();
+          evtCommunication = communication.get(10);
+          printf("StartAfterGet\n");
           if(evtCommunication.status == osEventMessage) {
             coords* nextCoord = (coords*) evtCommunication.value.p;
             bufferPlayerMoves[0].x = nextCoord->x;
