@@ -219,7 +219,8 @@ int main()
               status = constants::ONEUP;
             } else {
               addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
-              //LCDO Fehlerhaften Move zurücksetzen
+              lcd.cls();
+              lcd.printf("Bitte Figur anheben.");
               status = constants::WAITINGPLAYER;
             }
           }
@@ -266,7 +267,8 @@ int main()
               addPendingMove(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, !bufferPlayerMoves[1].up);              
               addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
 
-              //LCDO Fehlerhaften Move zurücksetzen
+              lcd.cls();
+              lcd.printf("3 Figuren anheben nicht möglich!");
               status = constants::WAITINGPLAYER;
             } else {
               if(bufferPlayerMoves[1].x == bufferPlayerMoves[2].x && bufferPlayerMoves[1].y == bufferPlayerMoves[2].y) {
@@ -276,7 +278,8 @@ int main()
                 addPendingMove(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, !bufferPlayerMoves[1].up);
                 addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
 
-                //LCDO Fehlerhaften Move zurücksetzen
+                lcd.cls();
+                lcd.printf("Figur muss an gleiche Stelle wie Geschlagene");
                 status = constants::WAITINGPLAYER;
               }
             }
@@ -312,7 +315,8 @@ int main()
               if(rbuffer[0] & protocol::CASTLING) {
                 ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
                 ledOn(rbuffer[3 + offset], rbuffer[4 + offset]);
-                //LCDO
+                lcd.cls();
+                lcd.printf("Rochade: Turm setzen");
 
                 addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
                 addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
@@ -324,7 +328,9 @@ int main()
 
                 addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
                 offset += 2;
-                //LCDO
+                lcd.cls();
+                lcd.printf("En passante");
+                
               }
 
               if(rbuffer[0] & protocol::PROMOTION) {
@@ -361,7 +367,9 @@ int main()
 
                 offset += 4;
 
-                //LCDO 
+                lcd.cls();
+                lcd.printf("KI: Normaler Move");
+                
               }
 
               if(rbuffer[1 + offset] & protocol::CASTLING) {
@@ -377,7 +385,8 @@ int main()
 
                 offset += 8;
                 
-                //LCDO
+                lcd.cls();
+                lcd.printf("KI: Rochade");
               }
 
               if(rbuffer[1 + offset] & protocol::ENPASSANT) {
@@ -391,7 +400,8 @@ int main()
 
                 offset += 6;
                 
-                //LCDO
+                lcd.cls();
+                lcd.printf("KI: En passante");
               }
 
               if(rbuffer[1 + offset] & protocol::PROMOTION) {
@@ -405,19 +415,24 @@ int main()
                 
                 offset += 4;                
                 
-                //LCDO
+                lcd.cls();
+                lcd.printf("KI: Promotion");
+
+                //TODO: Figur zu der befördert wird anzeigen
               }
 
               if(rbuffer[1 + offset] & protocol::CHECK) {
                 ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
 
                 //LCDO
+                //TODO: Vorher Delay?
               }
 
               if(rbuffer[1 + offset] & protocol::CHECKMATE) {
                 ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
 
                 //LCDO
+                //TODO: Vorher Delay?
                 //TODO: End of Game
               }
 
@@ -429,7 +444,8 @@ int main()
               addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
               addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
 
-              //LCDO
+              lcd.cls();
+              lcd.printf("Illegaler Move");
             }
           } else {
             //TODO: ERROR - Fehlerbit vom Server gesetzt
