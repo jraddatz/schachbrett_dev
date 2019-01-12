@@ -9,10 +9,12 @@ namespace constants {
     static const char* GATEWAY = "192.168.2.1";
 
     enum Status {
-        INITBOARD = 0, START = 99, ONEUP = 1, TWOUP = 2, SEND = 4, WAITINGSERVER = 10, WAITINGPLAYER = 20
+        FIRSTINIT = 0, NEWGAME = 90, START = 99, ONEUP = 1, TWOUP = 2, SEND = 4, WAITINGSERVER = 10, WAITINGPLAYER = 20, ERROR = 255
     };
 
     static const char FIELDS[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+
+    static const int TIMEOUT_GET_MAIL = 100;
 
     enum UpDown {
         UP = true, DOWN = false
