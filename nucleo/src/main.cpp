@@ -107,8 +107,9 @@ void checker_thread() {
             if(change&1) {
               pointer->x = x;
               pointer->y = y;
-              pointer->up = (a & 1 << x) == 0;
+              pointer->up = (a & 1 << x) != 0;
               communication.put(pointer);
+              printf("x = %d; y = %d; down = %u\n", x, y, (a >> x & 1));
             }
             x++;
             change >>=1;
