@@ -147,47 +147,97 @@ int main()
 {
   //TODO: Setup-Routine?
   // setup();
+  printf("MAIN start");
   i2c.frequency(100000);
   resetI2C(); 
 
+  printf("MAIN resetI2c");
+
+
   EthernetInterface net;
+  net.set_network(constants::OWN_ADDRESS, constants::NETMASK, constants::GATEWAY);
   net.connect();
+
+  printf("MAIN Ethernet connected\n");
+
   TCPSocket socket;
 
   uint8_t status = constants::INITBOARD;
   osEvent evtCommunication;
+  //osEvent evtCommunication2;
   osEvent evtPendingMoves;
   coords bufferPlayerMoves[3];
+  //int count;
   //TODO: Aufräumen?!
+  bool buttonPressed;
+  int gameType;
   while (1)
   {
       switch(status) {
-        case constants::INITBOARD:
+        case constants::FIRSTINIT:
+          printf("FIRSTINIT\n");            
+          
+          //wait(5.0);
+
           for(uint8_t y = 0; y < 8; y++) {
             mcps[y].getChanges(MCP23017_GPIO_PORT_B); 
           }
-          socket.open(&net);
-          socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
-          sendBuffer[0] = protocol::START;
-          sendBuffer[1] = 1;
-          socket.send(sendBuffer, sizeof sendBuffer);
-          rcount = socket.recv(rbuffer, sizeof rbuffer);
-          socket.close();
 
           //if(rbuffer[0] == '0') {}
           //TODO: Server antwortet nicht?!
+
+          printf("INITBOARD AFTER GETCHANGES\n");
+
           //TODO: Thread nur einmal starten
           //if(thread.get_state() != Thread::Running) {
             thread.start(checker_thread);
+            //wait(15.0);
+            //count = 0;
+            printf("INITBOARD CHECKER LÄUFT\n");
+            /**evtCommunication2 = communication.get(constants::TIMEOUT_GET_MAIL);
+            while(evtCommunication2.status == osEventMail) {
+              coords* nextCoord = (coords*) evtCommunication2.value.p;
+              communication.free(nextCoord);
+              count++;
+              evtCommunication2 = communication.get(constants::TIMEOUT_GET_MAIL);
+              printf("Eintrag entfernt: %d", count);
+            }**/
           //}
-          status = constants::START;
+          status = constants::NEWGAME;
           break; 
+
+        case constants::NEWGAME:
+          buttonPressed = false;
+          while (!buttonPressed) {
+            if(button1.pressed) {
+              gametype = protocol::AI;
+              buttonPressed = true;
+            } else if (button2.pressed) {
+              gametype = protocol::PVP;
+              buttonPressed = true;
+            }
+          }
+
+          socket.open(&net);
+          socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
+          sendBuffer[0] = protocol::START;
+          sendBuffer[1] = gametype;
+          socket.send(sendBuffer, sizeof sendBuffer);
+          rcount = socket.recv(rbuffer, sizeof rbuffer);
+          if(rbuffer[0] == '0') {
+            status = constants::START;
+          }  else {
+            status = constants::ERROR;
+          }
+          socket.close();
+          
+          break;
+
+
         case constants::START:
           printf("Start\n");
           evtCommunication = communication.get();
-          printf("StartAfterGet\n");
           if(evtCommunication.status == osEventMail) {
-            printf("StartAfterChange\n");
             coords* nextCoord = (coords*) evtCommunication.value.p;
             bufferPlayerMoves[0].x = nextCoord->x;
             bufferPlayerMoves[0].y = nextCoord->y;
@@ -359,6 +409,8 @@ int main()
                 addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
                 addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
 
+                printf("Erwarte Move\nx=%d, y=%d, UP\nx=%d, y=%d, DOWN", rbuffer[1 + offset], rbuffer[2 + offset], rbuffer[3 + offset], rbuffer[4 + offset]);
+
                 offset += 4;
 
                 lcd.cls();
@@ -464,24 +516,29 @@ int main()
 
         case constants::WAITINGPLAYER:
           printf("Waitingplayer\n");
-          evtPendingMoves = pendingMoves.get();
+          evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
+          printf("Waitingplayer after get1");
           while(evtPendingMoves.status == osEventMail) {
+            printf("Waitingplayer in while1");
             coords* nextPending = (coords*) evtPendingMoves.value.p;
               bool moveMade = false;
               while(!moveMade) {
-                evtCommunication = communication.get();
-                if(evtPendingMoves.status == osEventMail) {
-                  coords* nextMade = (coords*) evtPendingMoves.value.p;
+                printf("Waitingplayer in while 2");
+                evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
+                printf("Waitingplayer after get2");
+                if(evtCommunication.status == osEventMail) {
+                  coords* nextMade = (coords*) evtCommunication.value.p;
                   if(!(nextPending->x == nextMade->x && nextPending->y == nextMade->y && nextPending->up == nextMade->up)) {
+                    printf("Pending != nextMade\n");
                     //TODO: ERROR - Spieler hat falschen Move gemacht
-                  }
+                  } 
                   moveMade = true;
 
                   pendingMoves.free(nextPending);
                   communication.free(nextMade);
                 }
               }
-            evtPendingMoves = pendingMoves.get();
+            evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
           }
 
           status = constants::START;
