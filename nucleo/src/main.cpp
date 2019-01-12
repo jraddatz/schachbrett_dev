@@ -197,7 +197,7 @@ int main()
   net.connect();
   TCPSocket socket;
 
-  uint8_t status = constants::START;
+  uint8_t status = constants::INITBOARD;
   osEvent evtCommunication;
   osEvent evtPendingMoves;
   coords bufferPlayerMoves[3];
@@ -215,9 +215,7 @@ int main()
           //if(thread.get_state() != Thread::Running) {
             thread.start(checker_thread);
           //}
-          status = constants::START;
-          break; 
-        case constants::START:
+
           socket.open(&net);
           socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
           sendBuffer[0] = protocol::START;
@@ -225,6 +223,11 @@ int main()
           socket.send(sendBuffer, sizeof sendBuffer);
           rcount = socket.recv(rbuffer, sizeof rbuffer);
           socket.close();
+
+          status = constants::START;
+          break; 
+        case constants::START:
+
 
           printf("Start\n");
           evtCommunication = communication.get();
@@ -456,7 +459,8 @@ int main()
             //TODO: ERROR - Fehlerbit vom Server gesetzt
           }
 
-          status = constants::WAITINGPLAYER;
+          //status = constants::WAITINGPLAYER;
+          status = constants::START;
           //TODO: WAITINGSERVER-Case (Warten auf Serverantwort)
           break;
 
