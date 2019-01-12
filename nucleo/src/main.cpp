@@ -358,12 +358,17 @@ int main()
               // ***************************************************
               // Ab hier AI-Move
               // ***************************************************
-              if(rbuffer[1 + offset] & protocol::ILLEGAL) {
-                ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
-                ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
 
-                addPendingMove(rbuffer[2 + offset], rbuffer[3 + offset], constants::UP);
-                addPendingMove(rbuffer[4 + offset], rbuffer[5 + offset], constants::DOWN);
+              offset = protocol::AI_MOVE;
+
+              if(rbuffer[0 + protocol::AI_MOVE] & protocol::ILLEGAL) {
+                ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+                ledOn(rbuffer[3 + offset], rbuffer[4 + offset]);
+
+                printf("AI OK\n");
+
+                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
 
                 offset += 4;
 
@@ -372,16 +377,18 @@ int main()
                 
               }
 
-              if(rbuffer[1 + offset] & protocol::CASTLING) {
-                ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
-                ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
-                ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
-                ledOn(rbuffer[8 + offset], rbuffer[9 + offset]);
+              if(rbuffer[0 + protocol::AI_MOVE] & protocol::CASTLING) {
+                ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+                ledOn(rbuffer[3 + offset], rbuffer[4 + offset]);
+                ledOn(rbuffer[5 + offset], rbuffer[6 + offset]);
+                ledOn(rbuffer[7 + offset], rbuffer[8 + offset]);
 
-                addPendingMove(rbuffer[2 + offset], rbuffer[3 + offset], constants::UP);
-                addPendingMove(rbuffer[4 + offset], rbuffer[5 + offset], constants::DOWN);
-                addPendingMove(rbuffer[6 + offset], rbuffer[7 + offset], constants::UP);
-                addPendingMove(rbuffer[8 + offset], rbuffer[9 + offset], constants::DOWN);
+                printf("AI Castling\n");
+
+                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
+                addPendingMove(rbuffer[5 + offset], rbuffer[6 + offset], constants::UP);
+                addPendingMove(rbuffer[7 + offset], rbuffer[8 + offset], constants::DOWN);
 
                 offset += 8;
                 
@@ -389,14 +396,16 @@ int main()
                 lcd.printf("KI: Rochade");
               }
 
-              if(rbuffer[1 + offset] & protocol::ENPASSANT) {
-                ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
-                ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
-                ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
+              if(rbuffer[0 + protocol::AI_MOVE] & protocol::ENPASSANT) {
+                ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+                ledOn(rbuffer[3 + offset], rbuffer[4 + offset]);
+                ledOn(rbuffer[5 + offset], rbuffer[6 + offset]);
 
-                addPendingMove(rbuffer[2 + offset], rbuffer[3 + offset], constants::UP);
-                addPendingMove(rbuffer[4 + offset], rbuffer[5 + offset], constants::DOWN);
-                addPendingMove(rbuffer[6 + offset], rbuffer[7 + offset], constants::UP);
+                printf("AI Enpassant\n");
+
+                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
+                addPendingMove(rbuffer[5 + offset], rbuffer[6 + offset], constants::UP);
 
                 offset += 6;
                 
@@ -404,14 +413,16 @@ int main()
                 lcd.printf("KI: En passante");
               }
 
-              if(rbuffer[1 + offset] & protocol::PROMOTION) {
-                ledOn(rbuffer[2 + offset], rbuffer[3 + offset]);
-                ledOn(rbuffer[4 + offset], rbuffer[5 + offset]);
+              if(rbuffer[0 + protocol::AI_MOVE] & protocol::PROMOTION) {
+                ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+                ledOn(rbuffer[3 + offset], rbuffer[4 + offset]);
 
-                addPendingMove(rbuffer[2 + offset], rbuffer[3 + offset], constants::UP);
-                addPendingMove(rbuffer[4 + offset], rbuffer[5 + offset], constants::DOWN);
-                addPendingMove(rbuffer[4 + offset], rbuffer[5 + offset], constants::UP);
-                addPendingMove(rbuffer[4 + offset], rbuffer[5 + offset], constants::DOWN);                
+                printf("AI Promotion\n");
+
+                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
+                addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
+                addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);                
                 
                 offset += 4;                
                 
@@ -421,15 +432,19 @@ int main()
                 //TODO: Figur zu der befördert wird anzeigen
               }
 
-              if(rbuffer[1 + offset] & protocol::CHECK) {
-                ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
+              if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECK) {
+                ledOn(rbuffer[5 + offset], rbuffer[6 + offset]);
+                
+                printf("AI Check\n");
 
                 //LCDO
                 //TODO: Vorher Delay?
               }
 
-              if(rbuffer[1 + offset] & protocol::CHECKMATE) {
-                ledOn(rbuffer[6 + offset], rbuffer[7 + offset]);
+              if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECKMATE) {
+                ledOn(rbuffer[5 + offset], rbuffer[6 + offset]);
+
+                printf("AI Checkmate\n");
 
                 //LCDO
                 //TODO: Vorher Delay?
@@ -438,6 +453,9 @@ int main()
 
             } else {
               //Illegal Playermove
+
+              printf("Player Illegal\n");
+
               ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
               ledOn(rbuffer[3 + offset], rbuffer[4 + offset]);
 
