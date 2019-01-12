@@ -167,6 +167,16 @@ int main()
           for(uint8_t y = 0; y < 8; y++) {
             mcps[y].getChanges(MCP23017_GPIO_PORT_B); 
           }
+          socket.open(&net);
+          socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
+          sendBuffer[0] = protocol::START;
+          sendBuffer[1] = 1;
+          socket.send(sendBuffer, sizeof sendBuffer);
+          rcount = socket.recv(rbuffer, sizeof rbuffer);
+          socket.close();
+
+          //if(rbuffer[0] == '0') {}
+          //TODO: Server antwortet nicht?!
           //TODO: Thread nur einmal starten
           //if(thread.get_state() != Thread::Running) {
             thread.start(checker_thread);
