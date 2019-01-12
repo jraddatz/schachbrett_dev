@@ -33,13 +33,13 @@ void ledOn(uint8_t x, uint8_t y){
     return ;
   }
 
-  uint8_t a = mcps[y].readGPIO(MCP23017_GPIO_PORT_A);
-  mcps[y].writeGPIO(MCP23017_GPIO_PORT_A, a | 1 << x );
+  uint8_t a = mcps[7-x].readGPIO(MCP23017_GPIO_PORT_A);
+  mcps[7-x].writeGPIO(MCP23017_GPIO_PORT_A, a | 1 << y );
 }
 
 void ledsOff(){
-  for(uint8_t y = 0; y < 8; y++){
-    errorCode = mcps[y].writeGPIO(MCP23017_GPIO_PORT_A, 0x00);
+  for(uint8_t x = 0; x < 8; x++){
+    errorCode = mcps[x].writeGPIO(MCP23017_GPIO_PORT_A, 0x00);
     if (errorCode) {
       // reset();
     }
