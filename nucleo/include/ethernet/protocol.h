@@ -14,7 +14,7 @@ namespace protocol {
         QUEEN = 'Q', KING = 'K', ROOK = 'R', BISHOP = 'B', KNIGHT = 'N', PAWN = 'P'
     }; 
 
-    const int AI_MOVE = 7;
+    static const int AI_MOVE = 7;
 
 }
 
