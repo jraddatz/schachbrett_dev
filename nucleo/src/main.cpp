@@ -136,23 +136,31 @@ void checker_thread() {
         evtChars = chars.get();
         if(evtChars.status == osEventMail) {
           value* nextChar = (value*) evtChars.value.p;
-          pointer->x = nextChar->c;
+          pointer->x = nextChar->c - 'a';
+          chars.free(nextChar);
 
           evtChars = chars.get();
           if(evtChars.status == osEventMail) {
             value* nextChar2 = (value*) evtChars.value.p;
-            pointer->y = nextChar2->c;
+            pointer->y = nextChar2->c - '1';
+            chars.free(nextChar2);
+
             evtChars = chars.get();
             if(evtChars.status == osEventMail) {
               value* nextChar3 = (value*) evtChars.value.p;
-              pointer->up = nextChar3->c == '1';              
+              pointer->up = nextChar3->c == '1';      
+              chars.free(nextChar3);        
               communication.put(pointer);
+              pc.printf("Next Turn\n");
             }
           }
         }
       }
       value* tmp = chars.alloc();
-      tmp->c = pc.getc();
+      char tmpChar = pc.getc();
+      pc.printf("%d", tmpChar);
+      tmp->c = tmpChar;
+      //pc.printf(tmp->c);
       chars.put(tmp);
 
       wait(1.0);
@@ -208,9 +216,6 @@ int main()
 
       switch(status) {
         case constants::INITBOARD:
-          for(uint8_t y = 0; y < 8; y++) {
-            mcps[y].getChanges(MCP23017_GPIO_PORT_B); 
-          }
           //TODO: Thread nur einmal starten
           //if(thread.get_state() != Thread::Running) {
             thread.start(checker_thread);
@@ -231,9 +236,7 @@ int main()
 
           printf("Start\n");
           evtCommunication = communication.get();
-          printf("StartAfterGet\n");
           if(evtCommunication.status == osEventMail) {
-            printf("StartAfterChange\n");
             coords* nextCoord = (coords*) evtCommunication.value.p;
             bufferPlayerMoves[0].x = nextCoord->x;
             bufferPlayerMoves[0].y = nextCoord->y;
@@ -244,7 +247,8 @@ int main()
             } else {
               addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
               //LCDO Fehlerhaften Move zurücksetzen
-              status = constants::WAITINGPLAYER;
+              status = constants::START;
+              //status = constants::WAITINGPLAYER;
             }
           }
           break;
@@ -291,7 +295,8 @@ int main()
               addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
 
               //LCDO Fehlerhaften Move zurücksetzen
-              status = constants::WAITINGPLAYER;
+              status = constants::START;
+              //status = constants::WAITINGPLAYER;
             } else {
               if(bufferPlayerMoves[1].x == bufferPlayerMoves[2].x && bufferPlayerMoves[1].y == bufferPlayerMoves[2].y) {
                 status = constants::SEND;
@@ -301,7 +306,8 @@ int main()
                 addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
 
                 //LCDO Fehlerhaften Move zurücksetzen
-                status = constants::WAITINGPLAYER;
+                status = constants::START;
+                //status = constants::WAITINGPLAYER;
               }
             }
           }
@@ -334,6 +340,7 @@ int main()
           if(!(rbuffer[0] & protocol::ERROR)) {
             if(!(rbuffer[0] & protocol::ILLEGAL)) {
               if(rbuffer[0] & protocol::CASTLING) {
+                printf("Player Castling\n");
                 ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
                 ledOn(rbuffer[3 + offset], rbuffer[4 + offset]);
                 //LCDO
@@ -344,6 +351,7 @@ int main()
               }
 
               if(rbuffer[0] & protocol::ENPASSANT) {
+                printf("Player Enpassant\n");
                 ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
 
                 addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
@@ -352,6 +360,7 @@ int main()
               }
 
               if(rbuffer[0] & protocol::PROMOTION) {
+                printf("Player Promotion\n");
                 ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
                 offset += 2;
 
@@ -359,11 +368,13 @@ int main()
               }
 
               if(rbuffer[0] & protocol::CHECK) {
+                printf("Player Check\n");
                 ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
                 offset += 2;
               }
 
               if(rbuffer[0] & protocol::CHECKMATE) {
+                printf("Player Checkmate\n");
                 ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
 
                 //TODO: End of game!
