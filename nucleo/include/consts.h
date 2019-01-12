@@ -12,6 +12,10 @@ namespace constants {
         FIRSTINIT = 0, NEWGAME = 90, START = 99, ONEUP = 1, TWOUP = 2, SEND = 4, WAITINGSERVER = 10, WAITINGPLAYER = 20, ERROR = 255
     };
 
+    enum Player {
+        WHITE = true, BLACK = false
+    };
+
     static const char FIELDS[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
 
     static const int TIMEOUT_GET_MAIL = 100;
