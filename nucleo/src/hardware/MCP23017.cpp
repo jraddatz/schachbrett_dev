@@ -58,11 +58,11 @@ uint8_t MCP23017::getChanges(uint8_t port){
     if(port == MCP23017_GPIO_PORT_A){
         diff = lastMeasurementA;
         lastMeasurementA = readGPIO(port);
-        diff &= lastMeasurementA;
+        diff ^= lastMeasurementA;
     } else if (port == MCP23017_GPIO_PORT_B) {
         diff = lastMeasurementB;
         lastMeasurementB = readGPIO(port);
-        diff &= lastMeasurementB;
+        diff ^= lastMeasurementB;
     }
     return diff;
 }
