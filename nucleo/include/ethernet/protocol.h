@@ -9,6 +9,10 @@ namespace protocol {
     enum Commands {
         START = 1, RESET = 2, CASTLING = 2, TURN = 4, ENPASSANT = 4, PROMOTION = 8, CHECK = 16, CHECKMATE = 32, ILLEGAL = 64, ERROR = 128
     };
+
+    enum Gametype {
+        AI = 1, PVP = 0
+    };
     
     enum FigureChar {
         QUEEN = 'Q', KING = 'K', ROOK = 'R', BISHOP = 'B', KNIGHT = 'N', PAWN = 'P'
