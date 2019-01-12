@@ -92,26 +92,25 @@ Mail<coords, 10> communication;
 void checker_thread() {
   static uint8_t change = 0;
   while (true){
-    for(uint8_t y = 0; y < 8; y++) {
-      change = mcps[y].getChanges(MCP23017_GPIO_PORT_B);  
+    for(uint8_t x = 0; x < 8; x++) {
+      change = mcps[7 - x].getChanges(MCP23017_GPIO_PORT_B);  
       if(change){
-        printf("Checker");
         coords* pointer = communication.alloc();
         
         if(pointer == NULL){
           // not enough memory available
         } else {
-          uint8_t a = mcps[y].readGPIO(MCP23017_GPIO_PORT_B);
-          uint8_t x = 0 ;
+          uint8_t a = mcps[7 - x].readGPIO(MCP23017_GPIO_PORT_B);
+          uint8_t y = 0 ;
           while (change) {
             if(change&1) {
               pointer->x = x;
               pointer->y = y;
-              pointer->up = (a & 1 << x) != 0;
+              pointer->up = (a & 1 << y) != 0;
               communication.put(pointer);
-              printf("x = %d; y = %d; down = %u\n", x, y, (a >> x & 1));
+              printf("x = %d; y = %d; down = %u\n", x, y, (a >> y & 1));
             }
-            x++;
+            y++;
             change >>=1;
           }
         }
