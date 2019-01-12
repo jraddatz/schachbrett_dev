@@ -318,6 +318,9 @@ int main()
                 lcd.cls();
                 lcd.printf("Rochade: Turm setzen");
 
+                printf("Player: Castling\n");
+
+
                 addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
                 addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
                 offset += 4;
@@ -325,6 +328,8 @@ int main()
 
               if(rbuffer[0] & protocol::ENPASSANT) {
                 ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+
+                printf("Player: Enpassant\n");
 
                 addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
                 offset += 2;
@@ -342,11 +347,17 @@ int main()
 
               if(rbuffer[0] & protocol::CHECK) {
                 ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+
+                printf("Player: Check\n");
+
                 offset += 2;
               }
 
               if(rbuffer[0] & protocol::CHECKMATE) {
                 ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+
+                printf("Player: Checkmate\n");
+
 
                 //TODO: End of game!
               }
