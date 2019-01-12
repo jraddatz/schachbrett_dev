@@ -119,37 +119,44 @@ typedef struct {
   bool up;
 } coords;
 
+typedef struct {
+  char c;
+} value;
+
 Mail<coords, 10> communication;
+Mail<value, 3> chars;
+osEvent evtChars;
 
 void checker_thread() {
   static uint8_t change = 0;
+  uint16_t buffer;
   while (true){
-    for(uint8_t y = 0; y < 8; y++) {
-      change = mcps[y].getChanges(MCP23017_GPIO_PORT_B);  
-      if(change){
-        printf("Checker");
+      if(chars.full()) {
         coords* pointer = communication.alloc();
-        
-        if(pointer == NULL){
-          // not enough memory available
-        } else {
-          uint8_t a = mcps[y].readGPIO(MCP23017_GPIO_PORT_B);
-          uint8_t x = 0 ;
-          while (change) {
-            if(change&1) {
-              pointer->x = x;
-              pointer->y = y;
-              pointer->up = (a & 1 << x) == 0;
+        evtChars = chars.get();
+        if(evtChars.status == osEventMail) {
+          value* nextChar = (value*) evtChars.value.p;
+          pointer->x = nextChar->c;
+
+          evtChars = chars.get();
+          if(evtChars.status == osEventMail) {
+            value* nextChar2 = (value*) evtChars.value.p;
+            pointer->y = nextChar2->c;
+            evtChars = chars.get();
+            if(evtChars.status == osEventMail) {
+              value* nextChar3 = (value*) evtChars.value.p;
+              pointer->up = nextChar3->c == '1';              
               communication.put(pointer);
             }
-            x++;
-            change >>=1;
           }
         }
       }
+      value* tmp = chars.alloc();
+      tmp->c = pc.getc();
+      chars.put(tmp);
+
+      wait(1.0);
     }
-    wait(0.1);
-  }
 }
 
 Mail<coords, 10> pendingMoves;
@@ -177,12 +184,16 @@ Thread thread;
 
 int main() 
 {
+  lcd.cls();
+  lcd.printf("Hallo Jendrik");
+
   //TODO: Setup-Routine?
   // setup();
   i2c.frequency(100000);
   resetI2C(); 
 
   EthernetInterface net;
+  net.set_network(constants::OWN_ADDRESS, constants::NETMASK, constants::GATEWAY);
   net.connect();
   TCPSocket socket;
 
@@ -191,23 +202,10 @@ int main()
   osEvent evtPendingMoves;
   coords bufferPlayerMoves[3];
 
-  coords* pointer = communication.alloc();
-  pointer->x = 1;
-  pointer->y = 1;
-  pointer->up = true;
-  communication.put(pointer);
-
-  coords* pointer2 = communication.alloc();
-  pointer2->x = 1;
-  pointer2->y = 2;
-  pointer2->up = false;
-  communication.put(pointer2);
-
   //TODO: Aufräumen?!
   while (1)
   {
-      lcd.cls();
-      lcd.printf("Hallo Jendrik");
+
       switch(status) {
         case constants::INITBOARD:
           for(uint8_t y = 0; y < 8; y++) {
@@ -220,6 +218,14 @@ int main()
           status = constants::START;
           break; 
         case constants::START:
+          socket.open(&net);
+          socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
+          sendBuffer[0] = protocol::START;
+          sendBuffer[1] = 1;
+          socket.send(sendBuffer, sizeof sendBuffer);
+          rcount = socket.recv(rbuffer, sizeof rbuffer);
+          socket.close();
+
           printf("Start\n");
           evtCommunication = communication.get();
           printf("StartAfterGet\n");
@@ -307,8 +313,8 @@ int main()
           sendBuffer[0] = protocol::TURN;
           sendBuffer[1] = bufferPlayerMoves[0].x;
           sendBuffer[2] = bufferPlayerMoves[0].y; 
-          sendBuffer[1] = bufferPlayerMoves[1].x;
-          sendBuffer[1] = bufferPlayerMoves[1].y;
+          sendBuffer[3] = bufferPlayerMoves[1].x;
+          sendBuffer[4] = bufferPlayerMoves[1].y;
           socket.send(sendBuffer, sizeof sendBuffer);
         
           status = constants::WAITINGSERVER;
