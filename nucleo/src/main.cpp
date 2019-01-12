@@ -264,8 +264,8 @@ int main()
           sendBuffer[0] = protocol::TURN;
           sendBuffer[1] = bufferPlayerMoves[0].x;
           sendBuffer[2] = bufferPlayerMoves[0].y; 
-          sendBuffer[1] = bufferPlayerMoves[1].x;
-          sendBuffer[1] = bufferPlayerMoves[1].y;
+          sendBuffer[3] = bufferPlayerMoves[1].x;
+          sendBuffer[4] = bufferPlayerMoves[1].y;
           socket.send(sendBuffer, sizeof sendBuffer);
         
           status = constants::WAITINGSERVER;
