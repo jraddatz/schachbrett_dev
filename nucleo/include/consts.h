@@ -22,6 +22,7 @@ namespace constants {
     static const char FIELDS[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
 
     static const int TIMEOUT_GET_MAIL = 100;
+    static const float TIMEOUT_BLINK = 0.2;
 
     enum UpDown {
         UP = true, DOWN = false

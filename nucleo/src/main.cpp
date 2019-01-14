@@ -309,8 +309,11 @@ int main()
               lcd.printf("3 Figuren anheben nicht möglich!");
               status = constants::WAITINGPLAYER;
             } else {
+              //TODO: Zwei Moves/Coords vergleichen als Hilfsfunktion
               if(bufferPlayerMoves[1].x == bufferPlayerMoves[2].x && bufferPlayerMoves[1].y == bufferPlayerMoves[2].y) {
                 status = constants::SEND;
+                ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, constants::OFF);
+                wait(constants::TIMEOUT_BLINK);
               } else {
                 addPendingMove(bufferPlayerMoves[2].x, bufferPlayerMoves[2].y, !bufferPlayerMoves[2].up);
                 addPendingMove(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, !bufferPlayerMoves[1].up);
