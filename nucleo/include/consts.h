@@ -27,13 +27,13 @@ namespace constants {
         UP = true, DOWN = false
     };
 
-    static const PinName PIN_BUTTON_QUEEN = PC_4;
-    static const PinName PIN_BUTTON_KNIGHT = PC_4;
-    static const PinName PIN_BUTTON_BISHOP = PC_4; 
-    static const PinName PIN_BUTTON_ROOK = PC_4;
-    static const PinName PIN_BUTTON_START = PC_4;
-    static const PinName PIN_BUTTON_AI = PC_4;
-    static const PinName PIN_BUTTON_PVP = PC_4;
+    static const PinName PIN_BUTTON_QUEEN = PC_6;
+    static const PinName PIN_BUTTON_KNIGHT = PC_6;
+    static const PinName PIN_BUTTON_BISHOP = PC_6; 
+    static const PinName PIN_BUTTON_ROOK = PC_6;
+    static const PinName PIN_BUTTON_START = PC_6;
+    static const PinName PIN_BUTTON_AI = PC_6;
+    static const PinName PIN_BUTTON_PVP = PC_6;
 }
 
 

@@ -34,18 +34,60 @@
 #define MCP23017_OLATB 0x15
 
 #define MCP23017_INT_ERR 255
-
+/**
+ * Hardware class for the MCP23017 GPIO Extender
+ * PortA is for The LEDs
+ * PortB is for the hal sensor
+ * 
+ * PortB pins 1-8
+ * PortA pins 21-28
+ * VDD pin 9
+ * VSS pin 10
+ * SCL pin 12
+ * SDA pin 13
+ * A0,A1,A2 pins 15,16,17
+ */
 class MCP23017 {
 public:
+  /**
+  * Constructor which needs the ID of the MCP23017 and the I2C
+  * @param id the ID of the MCP which is Based on the A0, A1, A2 configuration.
+  * @param i2c_ the I2C interface the MCP23017 is connected with
+  */
   MCP23017(uint8_t, I2C & i2c_);
+  /**
+   * initialisation of the MCP23017. PortA gets configured as Output for the LEDs. PortB gets configured as Input for the Sensors and the Pullup are activated.
+   */
   void init();
-    
+  /**
+   * 
+   */
   void begin();
-
+  /**
+   * Write Data into a Register 
+   * @param register The Register to be rewritten
+   * @param data the Data to write into the gien Register
+   * @return uint8_t 
+   */
   uint8_t writeRegister(uint8_t, uint8_t);
+  /**
+   * Read current Value of a Register 
+   * @param which Register
+   * @return 
+   */
   uint8_t readRegister(uint8_t);
+  /**
+   * Read a GPIO 
+   * @return 
+   */
   uint8_t readGPIO(uint8_t);
+  /**
+   * 
+   */
   uint8_t writeGPIO(uint8_t, uint8_t);
+  /**
+   * 
+   */
   uint8_t getChanges(uint8_t);
 private:
   I2C & i2c;

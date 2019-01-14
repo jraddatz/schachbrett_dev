@@ -39,15 +39,29 @@ char[] stringifyCoords(uint8_t x, uint8_t y) {
 }
 **/
 
+/**
+ * 
+ */
+void setup(){
+  
+}
+
+/**
+ * toggle an LED on at the given Coordinates
+ * @param x 
+ * @param y 
+ */
 void ledOn(uint8_t x, uint8_t y){
   if(x >= 8 || y >= 8){
     return ;
   }
-
-  uint8_t a = mcps[7-x].readGPIO(MCP23017_GPIO_PORT_A);
-  mcps[7-x].writeGPIO(MCP23017_GPIO_PORT_A, a | 1 << y );
+  uint8_t a = mcps[x].readGPIO(MCP23017_GPIO_PORT_A);
+  mcps[x].writeGPIO(MCP23017_GPIO_PORT_A, a | 1 << y );
 }
 
+/**
+ * Toggles all LEDs off
+ */
 void ledsOff(){
   for(uint8_t x = 0; x < 8; x++){
     errorCode = mcps[x].writeGPIO(MCP23017_GPIO_PORT_A, 0x00);
@@ -57,23 +71,9 @@ void ledsOff(){
   }
 }
 
-
-void scanI2c(I2C &ic)
-{
-  char pointer[1] = {0};
-  for (int i = 0; i < 256; i++)
-  {
-    if (ic.write(i, pointer, 0) == 0)
-    {
-      pc.printf("Found at Address: %d\n", i);
-    }
-    else
-    {
-      pc.printf("Found nothing at Address: %d\n", i);
-    }
-  }
-}
-
+/**
+ * Helper Function to reset all GPIO Extender
+ */
 void resetI2C(){
   notReset = 0;
   wait_ms(1);
@@ -84,14 +84,6 @@ void resetI2C(){
 
 }
 
-uint16_t errorCount = 0;
-
-void printError (uint8_t mcpID){
-  lcd.cls();
-  lcd.printf("%d\n", errorCount);
-  lcd.printf("%d\n", mcpID);
-}
-
 typedef struct {
   uint8_t x;
   uint8_t y;
@@ -99,19 +91,21 @@ typedef struct {
 } coords;
 
 Mail<coords, 10> communication;
-
+/**
+ * Thread for checking the GPIO Extenders. If there is a Sensor which did change there will be a message writen to the Communication Mail.
+ */
 void checker_thread() {
   static uint8_t change = 0;
   while (true){
     for(uint8_t x = 0; x < 8; x++) {
-      change = mcps[7 - x].getChanges(MCP23017_GPIO_PORT_B);  
+      change = mcps[x].getChanges(MCP23017_GPIO_PORT_B);  
       if(change){
         coords* pointer = communication.alloc();
         
         if(pointer == NULL){
-          // not enough memory available
+          // not enough memory available maybe there is a error ?
         } else {
-          uint8_t a = mcps[7 - x].readGPIO(MCP23017_GPIO_PORT_B);
+          uint8_t a = mcps[x].readGPIO(MCP23017_GPIO_PORT_B);
           uint8_t y = 0 ;
           while (change) {
             if(change&1) {
@@ -201,10 +195,10 @@ int main()
           lcd.printf("Choose Mode!");
           buttonPressed = false;
           while (!buttonPressed) {
-            if(buttonAI.read()) {
+            if(!buttonAI.read()) {
               gameType = protocol::AI;
               buttonPressed = true;
-            } else if (buttonPVP.read()) {
+            } else if (!buttonPVP.read()) {
               gameType = protocol::PVP;
               buttonPressed = true;
             }
@@ -216,7 +210,7 @@ int main()
           sendBuffer[1] = gameType;
           socket.send(sendBuffer, sizeof sendBuffer);
           rcount = socket.recv(rbuffer, sizeof rbuffer);
-          if(rbuffer[0] == '0') {
+          if(rbuffer[0] == 0) {
             status = constants::START;
           }  else {
             status = constants::ERROR;
@@ -543,15 +537,15 @@ int main()
         case constants::WAITINGPLAYER:
           printf("Waitingplayer\n");
           evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
-          printf("Waitingplayer after get1");
+          printf("Waitingplayer after get1\n");
           while(evtPendingMoves.status == osEventMail) {
-            printf("Waitingplayer in while1");
+            printf("Waitingplayer in while1\n");
             coords* nextPending = (coords*) evtPendingMoves.value.p;
               bool moveMade = false;
               while(!moveMade) {
-                printf("Waitingplayer in while 2");
+                printf("Waitingplayer in while 2\n");
                 evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
-                printf("Waitingplayer after get2");
+                printf("Waitingplayer after get2\n");
                 if(evtCommunication.status == osEventMail) {
                   coords* nextMade = (coords*) evtCommunication.value.p;
                   if(!(nextPending->x == nextMade->x && nextPending->y == nextMade->y && nextPending->up == nextMade->up)) {
@@ -573,6 +567,9 @@ int main()
             status = constants::START;
           }
         break;
+        case constants::ERROR:
+          printf("----\nError\n-----");
+          break;
       }
     }
 }
