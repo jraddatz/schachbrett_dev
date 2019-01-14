@@ -60,6 +60,14 @@ void ledToggle(uint8_t x, uint8_t y, uint8_t on = 1 ){
   mcps[x].writeGPIO(MCP23017_GPIO_PORT_A, a );
 }
 
+uint8_t checkField (uint8_t x, uint8_t y){
+  if(x >= 8 || y >= 8){
+    return -1; // error
+  }
+  uint8_t a = mcps[x].readGPIO(MCP23017_GPIO_PORT_A);
+  return a >> y & 1;
+}
+
 /**
  * Toggles all LEDs off
  */
