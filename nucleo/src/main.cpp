@@ -13,6 +13,14 @@ uint8_t errorCode = 0;
 
 TextLCD lcd(PG_2, PG_3, PD_7, PD_6, PD_5, PD_4); 
 
+DigitalIn buttonQueen(constants::PIN_BUTTON_QUEEN, PullUp);
+DigitalIn buttonKnight(constants::PIN_BUTTON_KNIGHT, PullUp);
+DigitalIn buttonBishop(constants::PIN_BUTTON_BISHOP, PullUp);
+DigitalIn buttonRook(constants::PIN_BUTTON_ROOK, PullUp);
+DigitalIn buttonStart(constants::PIN_BUTTON_START, PullUp);
+DigitalIn buttonAI(constants::PIN_BUTTON_AI, PullUp);
+DigitalIn buttonPVP(constants::PIN_BUTTON_PVP, PullUp);
+
 MCP23017 mcps[8] = {
   MCP23017(0 , i2c ),MCP23017(1 , i2c ),
   MCP23017(2 , i2c ),MCP23017(3 , i2c ),

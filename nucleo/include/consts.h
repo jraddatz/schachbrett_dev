@@ -1,5 +1,8 @@
 #ifndef CONSTS_H
 #define CONSTS_H
+
+#include <mbed.h>
+
 namespace constants {
     static const char* ECHO_SERVER_ADDRESS = "192.168.2.1";
     static const int ECHO_SERVER_PORT = 3000;
@@ -24,10 +27,13 @@ namespace constants {
         UP = true, DOWN = false
     };
 
-    enum Buttons {
-        BUTTON_QUEEN = PC_4, BUTTON_KNIGHT = PC_4, BUTTON_BISHOP = PC_4, BUTTON_ROOK = PC_4,
-        BUTTON_START = PC_4, BUTTON_AI = PC_4, BUTTON_PVP = PC_4
-    };
+    static const PinName PIN_BUTTON_QUEEN = PC_4;
+    static const PinName PIN_BUTTON_KNIGHT = PC_4;
+    static const PinName PIN_BUTTON_BISHOP = PC_4; 
+    static const PinName PIN_BUTTON_ROOK = PC_4;
+    static const PinName PIN_BUTTON_START = PC_4;
+    static const PinName PIN_BUTTON_AI = PC_4;
+    static const PinName PIN_BUTTON_PVP = PC_4;
 }
 
 
