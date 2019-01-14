@@ -47,9 +47,11 @@ void setup(){
 }
 
 /**
- * toggle an LED on at the given Coordinates
- * @param x 
- * @param y 
+ * toggle an LED at the given coordinates
+ * @param x the x coordinate of the LED
+ * @param y the y coordinate of the LED
+ * @oaram on 1 for on, 0 for off (default is 1)
+ *    
  */
 void ledToggle(uint8_t x, uint8_t y, uint8_t on = 1 ){
   if(x >= 8 || y >= 8){
@@ -60,6 +62,12 @@ void ledToggle(uint8_t x, uint8_t y, uint8_t on = 1 ){
   mcps[x].writeGPIO(MCP23017_GPIO_PORT_A, a );
 }
 
+/**
+ * returns the status of the field at given coordinates
+ * @param x the x coordinate of the field
+ * @param y the y coordinate of the field
+ * @return 1 for occupied, 0 for empty
+ */
 uint8_t checkField (uint8_t x, uint8_t y){
   if(x >= 8 || y >= 8){
     return -1; // error
@@ -93,6 +101,9 @@ void resetI2C(){
 
 }
 
+/**
+ * struct for the move of a single figure
+ */
 typedef struct {
   uint8_t x;
   uint8_t y;
@@ -101,7 +112,7 @@ typedef struct {
 
 Mail<coords, 10> communication;
 /**
- * Thread for checking the GPIO Extenders. If there is a Sensor which did change there will be a message writen to the Communication Mail.
+ * Thread for checking the GPIO Extenders. If there is a Sensor which did change, there will be a message written to the Communication Mail.
  */
 void checker_thread() {
   static uint8_t change = 0;
@@ -136,6 +147,13 @@ void checker_thread() {
 
 Mail<coords, 10> pendingMoves;
 
+//TODO: bool in uint umstellen?
+/**
+ * Function to add a move that has to be done by the player to the pendingMoves Mail
+ * @param x the x coordinate of the move
+ * @param y the y coordinate of the move
+ * @param up true for up, false for down
+ */
 bool addPendingMove(uint8_t x, uint8_t y, bool up) {
   coords* pointer = pendingMoves.alloc();
   
@@ -179,7 +197,6 @@ int main()
 
   uint8_t status = constants::FIRSTINIT;
   osEvent evtCommunication;
-  //osEvent evtCommunication2;
   osEvent evtPendingMoves;
   coords bufferPlayerMoves[3];
   //int count;
@@ -275,7 +292,6 @@ int main()
 
         case constants::TWOUP:
           printf("Twoup\n");
-          //TODO: Evtl. blinken?
           ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
           evtCommunication = communication.get();
           if(evtCommunication.status == osEventMail) {
