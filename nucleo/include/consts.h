@@ -23,6 +23,11 @@ namespace constants {
     enum UpDown {
         UP = true, DOWN = false
     };
+
+    enum Buttons {
+        BUTTON_QUEEN = PC_4, BUTTON_KNIGHT = PC_4, BUTTON_BISHOP = PC_4, BUTTON_ROOK = PC_4,
+        BUTTON_START = PC_4, BUTTON_AI = PC_4, BUTTON_PVP = PC_4
+    };
 }
 
 
