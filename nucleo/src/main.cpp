@@ -474,7 +474,7 @@ int main()
 
                   if(rbuffer[0 + protocol::AI_MOVE] & protocol::PROMOTION) {
                     printf("AI Promotion\n");
-                    
+
                     addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
                     addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);                
                     
@@ -522,9 +522,13 @@ int main()
 
               ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
               ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-
+              
               addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
               addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
+              if(bufferPlayerMoves[2].x == bufferPlayerMoves[1].x && bufferPlayerMoves[1].y == bufferPlayerMoves[2].y && bufferPlayerMoves[1].up != bufferPlayerMoves[2].up) {
+                //Hier wurde illegal geschlagen
+                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
+              }
 
               lcd.cls();
               lcd.printf("Illegaler Move");
