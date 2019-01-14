@@ -452,7 +452,6 @@ int main()
 
                   
                   addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                  //Schlagenmove
                   if(checkField(rbuffer[3 + offset], rbuffer[4 + offset])) addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
                   addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
 
@@ -567,24 +566,25 @@ int main()
           while(evtPendingMoves.status == osEventMail) {
             printf("Waitingplayer in while1\n");
             coords* nextPending = (coords*) evtPendingMoves.value.p;
-              bool moveMade = false;
-              while(!moveMade) {
-                printf("Waitingplayer in while 2\n");
-                evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
-                printf("Waitingplayer after get2\n");
-                if(evtCommunication.status == osEventMail) {
-                  coords* nextMade = (coords*) evtCommunication.value.p;
-                  if((nextPending->x == nextMade->x && nextPending->y == nextMade->y && nextPending->up == nextMade->up)) {
-                    printf("%d : %d --- Move resetet", nextPending->x, nextPending->y);
-                    ledToggle(nextPending->x, nextPending->y, constants::OFF);
-                    moveMade = true;
-                  } else {      
-                    printf("Pending != nextMade\n");
-                    //TODO: ERROR - Spieler hat falschen Move gemacht            
-                  } 
-                  communication.free(nextMade);
-                }
+            ledToggle(nextPending->x, nextPending->y, constants::ON);
+            bool moveMade = false;
+            while(!moveMade) {
+              printf("Waitingplayer in while 2\n");
+              evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
+              printf("Waitingplayer after get2\n");
+              if(evtCommunication.status == osEventMail) {
+                coords* nextMade = (coords*) evtCommunication.value.p;
+                if((nextPending->x == nextMade->x && nextPending->y == nextMade->y && nextPending->up == nextMade->up)) {
+                  printf("%d : %d --- Move resetet", nextPending->x, nextPending->y);
+                  ledToggle(nextPending->x, nextPending->y, constants::OFF);
+                  moveMade = true;
+                } else {      
+                  printf("Pending != nextMade\n");
+                  //TODO: ERROR - Spieler hat falschen Move gemacht            
+                } 
+                communication.free(nextMade);
               }
+            }
             pendingMoves.free(nextPending);
             evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
           }
