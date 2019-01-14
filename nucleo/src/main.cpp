@@ -17,6 +17,7 @@ DigitalIn buttonQueen(constants::PIN_BUTTON_QUEEN, PullUp);
 DigitalIn buttonKnight(constants::PIN_BUTTON_KNIGHT, PullUp);
 DigitalIn buttonBishop(constants::PIN_BUTTON_BISHOP, PullUp);
 DigitalIn buttonRook(constants::PIN_BUTTON_ROOK, PullUp);
+//TODO: Interrupt an Start-Buton https://os.mbed.com/docs/v5.6/reference/interruptin.html
 DigitalIn buttonStart(constants::PIN_BUTTON_START, PullUp);
 DigitalIn buttonAI(constants::PIN_BUTTON_AI, PullUp);
 DigitalIn buttonPVP(constants::PIN_BUTTON_PVP, PullUp);
@@ -193,21 +194,18 @@ int main()
         break; 
 
         case constants::NEWGAME:
-        //TODO: Buttons für Gametype-Auswahl
-        /**
+          lcd.cls();
+          lcd.printf("Choose Mode!");
           buttonPressed = false;
           while (!buttonPressed) {
-            if(button1.pressed) {
+            if(buttonAI.read()) {
               gameType = protocol::AI;
               buttonPressed = true;
-            } else if (button2.pressed) {
+            } else if (buttonPVP.read()) {
               gameType = protocol::PVP;
               buttonPressed = true;
             }
-          }**/
-          gameType = protocol::PVP;
-          lcd.cls();
-          lcd.printf("Choose Mode!");
+          }
 
           socket.open(&net);
           socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
@@ -220,8 +218,7 @@ int main()
           }  else {
             status = constants::ERROR;
           }
-          socket.close();
-          
+          socket.close();          
           break;
 
 
