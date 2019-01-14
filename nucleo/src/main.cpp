@@ -302,6 +302,9 @@ int main()
 
         case constants::SEND:
           printf("Send\n");
+
+          ledOn(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
+
           socket.open(&net);
           socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
 
