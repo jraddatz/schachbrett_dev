@@ -22,6 +22,8 @@ DigitalIn buttonStart(constants::PIN_BUTTON_START, PullUp);
 DigitalIn buttonAI(constants::PIN_BUTTON_AI, PullUp);
 DigitalIn buttonPVP(constants::PIN_BUTTON_PVP, PullUp);
 
+//TODO: Send-Methode auslagern
+
 MCP23017 mcps[8] = {
   MCP23017(0 , i2c ),MCP23017(1 , i2c ),
   MCP23017(2 , i2c ),MCP23017(3 , i2c ),
@@ -151,6 +153,7 @@ int offset;
 char rbuffer[64];
 int rcount;
 Thread thread;
+bool isPromoted = false;
 
 int main() 
 {
@@ -313,6 +316,7 @@ int main()
           sendBuffer[2] = bufferPlayerMoves[0].y; 
           sendBuffer[3] = bufferPlayerMoves[1].x;
           sendBuffer[4] = bufferPlayerMoves[1].y;
+
           socket.send(sendBuffer, sizeof sendBuffer);
         
           status = constants::WAITINGSERVER;
@@ -349,15 +353,42 @@ int main()
 
                 addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
                 offset += 2;
+
                 lcd.cls();
                 lcd.printf("En passante");
                 
               }
 
               if(rbuffer[0] & protocol::PROMOTION) {
+                isPromoted = true;
+                sendBuffer[0] = protocol::PROMOTION;
+
                 ledOn(rbuffer[1 + offset], rbuffer[2 + offset]);
+
+                while(!(buttonQueen.read() || buttonKnight.read() || buttonBishop.read() || buttonRook.read())) {
+                  wait(0.1);
+                }
+
+                if(buttonQueen.read()) {
+                  sendBuffer[1] = protocol::QUEEN;
+                } else if (buttonKnight.read()) {
+                  sendBuffer[1] = protocol::KNIGHT;
+                } else if (buttonBishop.read()) {
+                  sendBuffer[1] = protocol::BISHOP;
+                } else if (buttonRook.read()) {
+                  sendBuffer[1] = protocol::ROOK;
+                }
+
+                socket.open(&net);
+                socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
+                socket.send(sendBuffer, sizeof sendBuffer);
+
+                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
+
                 offset += 2;
 
+                //LCDO
                 //TODO: Promotion
               }
 
@@ -458,7 +489,7 @@ int main()
                   
                   lcd.cls();
                   lcd.printf("KI: Promotion");
-
+                  //LCDO
                   //TODO: Figur zu der befördert wird anzeigen
                 }
 
@@ -483,7 +514,7 @@ int main()
 
               }
 
-            if(gameType == protocol::PVP) {
+            if(!isPromoted && gameType == protocol::PVP) {
               player = !player;
             }
 
@@ -535,8 +566,12 @@ int main()
               }
             evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
           }
-
-          status = constants::START;
+          if(isPromoted) {
+            status = constants::WAITINGSERVER;
+            isPromoted = false;
+          } else {
+            status = constants::START;
+          }
         break;
       }
     }
