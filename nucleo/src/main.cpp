@@ -431,7 +431,10 @@ int main()
 
                   printf("AI OK\n");
 
+                  
                   addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                  //Schlagenmove
+                  if(checkField(rbuffer[3 + offset], rbuffer[4 + offset])) addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
                   addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
 
                   printf("Erwarte Move\nx=%d, y=%d, UP\nx=%d, y=%d, DOWN", rbuffer[1 + offset], rbuffer[2 + offset], rbuffer[3 + offset], rbuffer[4 + offset]);
