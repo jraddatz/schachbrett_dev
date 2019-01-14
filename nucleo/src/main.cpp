@@ -439,67 +439,56 @@ int main()
 
                   printf("Erwarte Move\nx=%d, y=%d, UP\nx=%d, y=%d, DOWN", rbuffer[1 + offset], rbuffer[2 + offset], rbuffer[3 + offset], rbuffer[4 + offset]);
 
-                  offset += 4;
+                  offset += 2;
 
                   lcd.cls();
                   lcd.printf("KI: Normaler Move");
                   
-                }
-
                 if(rbuffer[0 + protocol::AI_MOVE] & protocol::CASTLING) {
-                  ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
                   ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
                   ledToggle(rbuffer[5 + offset], rbuffer[6 + offset]);
-                  ledToggle(rbuffer[7 + offset], rbuffer[8 + offset]);
 
                   printf("AI Castling\n");
 
-                  addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                  addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
-                  addPendingMove(rbuffer[5 + offset], rbuffer[6 + offset], constants::UP);
-                  addPendingMove(rbuffer[7 + offset], rbuffer[8 + offset], constants::DOWN);
+                  addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
+                  addPendingMove(rbuffer[5 + offset], rbuffer[6 + offset], constants::DOWN);
 
-                  offset += 8;
+                  offset += 6;
                   
                   lcd.cls();
                   lcd.printf("KI: Rochade");
                 }
 
                 if(rbuffer[0 + protocol::AI_MOVE] & protocol::ENPASSANT) {
-                  ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-                  ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-                  ledToggle(rbuffer[5 + offset], rbuffer[6 + offset]);
+                    ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
 
-                  printf("AI Enpassant\n");
+                    printf("AI Enpassant\n");
 
-                  addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                  addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
-                  addPendingMove(rbuffer[5 + offset], rbuffer[6 + offset], constants::UP);
+                    addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
 
-                  offset += 6;
-                  
-                  lcd.cls();
-                  lcd.printf("KI: En passante");
+                    offset += 4;
+                    
+                    lcd.cls();
+                    lcd.printf("KI: En passante");
+                  }
+
+                  if(rbuffer[0 + protocol::AI_MOVE] & protocol::PROMOTION) {
+                    printf("AI Promotion\n");
+                    
+                    addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                    addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);                
+                    
+                    offset += 6;                
+                    
+                    lcd.cls();
+                    lcd.printf("KI: Promotion");
+                    //LCDO
+                    //TODO: Figur zu der befördert wird anzeigen
+                  }
+
                 }
 
-                if(rbuffer[0 + protocol::AI_MOVE] & protocol::PROMOTION) {
-                  ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-                  ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
 
-                  printf("AI Promotion\n");
-
-                  addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                  addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
-                  addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
-                  addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);                
-                  
-                  offset += 4;                
-                  
-                  lcd.cls();
-                  lcd.printf("KI: Promotion");
-                  //LCDO
-                  //TODO: Figur zu der befördert wird anzeigen
-                }
 
                 if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECK) {
                   ledToggle(rbuffer[5 + offset], rbuffer[6 + offset]);

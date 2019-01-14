@@ -28,7 +28,7 @@ namespace constants {
     };
 
     enum LedStatus {
-        ON = 1, OFF 0
+        ON = 1, OFF = 0
     };
 
     static const PinName PIN_BUTTON_QUEEN = PC_6;
