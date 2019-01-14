@@ -551,16 +551,18 @@ int main()
                 printf("Waitingplayer after get2\n");
                 if(evtCommunication.status == osEventMail) {
                   coords* nextMade = (coords*) evtCommunication.value.p;
-                  if(!(nextPending->x == nextMade->x && nextPending->y == nextMade->y && nextPending->up == nextMade->up)) {
+                  if((nextPending->x == nextMade->x && nextPending->y == nextMade->y && nextPending->up == nextMade->up)) {
+                    printf("%d : %d --- Move resetet", nextPending->x, nextPending->y);
+                    ledToggle(nextPending->x, nextPending->y, constants::OFF);
+                    moveMade = true;
+                  } else {      
                     printf("Pending != nextMade\n");
-                    //TODO: ERROR - Spieler hat falschen Move gemacht
+                    //TODO: ERROR - Spieler hat falschen Move gemacht            
                   } 
-                  moveMade = true;
-
-                  pendingMoves.free(nextPending);
                   communication.free(nextMade);
                 }
               }
+            pendingMoves.free(nextPending);
             evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
           }
           if(isPromoted) {
