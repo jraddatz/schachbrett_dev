@@ -21,11 +21,11 @@ InterruptIn buttonStart(constants::PIN_BUTTON_START);
 DigitalIn buttonAI(constants::PIN_BUTTON_AI, PullUp);
 DigitalIn buttonPVP(constants::PIN_BUTTON_PVP, PullUp);
 
-void startPressed() {
+Thread threadChecker;
+Thread threadGame;
 
-}
-
-//TODO: Send-Methode auslagern
+EthernetInterface net;
+TCPSocket socket;
 
 MCP23017 mcps[8] = {
   MCP23017(0 , i2c ),MCP23017(1 , i2c ),
@@ -113,6 +113,13 @@ typedef struct {
   bool up;
 } coords;
 
+void tcpSend(char byte0, char byte1, char byte2, char byte3, char byte4) {
+  socket.open(&net);
+  socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
+  char sendBuffer[] = {byte0, byte1, byte2, byte3, byte4}; 
+  socket.send(sendBuffer, sizeof(sendBuffer));
+}
+
 Mail<coords, 10> communication;
 /**
  * Thread for checking the GPIO Extenders. If there is a Sensor which did change, there will be a message written to the Communication Mail.
@@ -172,437 +179,419 @@ bool addPendingMove(uint8_t x, uint8_t y, bool up) {
   return true;
 }
 
-char sendBuffer[5];
-int offset;
-char rbuffer[64];
-int rcount;
-Thread thread;
-bool isPromoted = false;
-
 int main() 
 {
   //TODO: Setup-Routine?
   // setup();
-  printf("MAIN start");
   i2c.frequency(100000);
   resetI2C(); 
 
-  printf("MAIN resetI2c");
-
   buttonStart.rise(&startPressed);
 
-  EthernetInterface net;
   net.set_network(constants::OWN_ADDRESS, constants::NETMASK, constants::GATEWAY);
   net.connect();
+            
+  for(uint8_t y = 0; y < 8; y++) {
+    mcps[y].getChanges(MCP23017_GPIO_PORT_B); 
+  }
+  threadChecker.start(checker_thread);
+  threadGame.start(game_thread);
 
-  printf("MAIN Ethernet connected\n");
+  printf("FIRSTINIT DONE\n");
+}
 
-  TCPSocket socket;
-
+void game_thread() {
   uint8_t status = constants::FIRSTINIT;
   osEvent evtCommunication;
   osEvent evtPendingMoves;
   coords bufferPlayerMoves[3];
-  //int count;
-  //TODO: Aufräumen?!
   bool buttonPressed;
   int gameType;
   bool player = constants::WHITE;
+  bool isPromoted = false;
+  int offset;
+  char rbuffer[64];
+  int rcount;
+
   while (1)
   {
-      switch(status) {
-        case constants::FIRSTINIT:
-          printf("FIRSTINIT\n");            
-          for(uint8_t y = 0; y < 8; y++) {
-            mcps[y].getChanges(MCP23017_GPIO_PORT_B); 
+    switch(status) {
+      case constants::NEWGAME:
+        lcd.cls();
+        lcd.printf("Choose Mode!");
+        buttonPressed = false;
+        while (!buttonPressed) {
+          if(!buttonAI.read()) {
+            gameType = protocol::AI;
+            buttonPressed = true;
+          } else if (!buttonPVP.read()) {
+            gameType = protocol::PVP;
+            buttonPressed = true;
           }
-          thread.start(checker_thread);
-          status = constants::NEWGAME;
-        break; 
+        }
 
-        case constants::NEWGAME:
-          lcd.cls();
-          lcd.printf("Choose Mode!");
-          buttonPressed = false;
-          while (!buttonPressed) {
-            if(!buttonAI.read()) {
-              gameType = protocol::AI;
-              buttonPressed = true;
-            } else if (!buttonPVP.read()) {
-              gameType = protocol::PVP;
-              buttonPressed = true;
-            }
-          }
-
-          socket.open(&net);
-          socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
-          sendBuffer[0] = protocol::START;
-          sendBuffer[1] = gameType;
-          socket.send(sendBuffer, sizeof sendBuffer);
-          rcount = socket.recv(rbuffer, sizeof rbuffer);
-          if(rbuffer[0] == 0) {
-            status = constants::START;
-          }  else {
-            status = constants::ERROR;
-          }
-          socket.close();          
-          break;
-
-
-        case constants::START:
-          printf("Start\n");
-          evtCommunication = communication.get();
-          if(evtCommunication.status == osEventMail) {
-            coords* nextCoord = (coords*) evtCommunication.value.p;
-            bufferPlayerMoves[0].x = nextCoord->x;
-            bufferPlayerMoves[0].y = nextCoord->y;
-            bufferPlayerMoves[0].up = nextCoord->up;
-            communication.free(nextCoord);
-            if(bufferPlayerMoves[0].up) {
-              status = constants::ONEUP;
-            } else {
-              addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
-              lcd.cls();
-              lcd.printf("Bitte Figur anheben.\n");
-              status = constants::WAITINGPLAYER;
-            }
-          }
-          break;
-
-        case constants::ONEUP:
-          printf("Oneup\n");
-          ledToggle(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y);
-          evtCommunication = communication.get();
-          if(evtCommunication.status == osEventMail) {
-            coords* nextCoord = (coords*) evtCommunication.value.p;
-            bufferPlayerMoves[1].x = nextCoord->x;
-            bufferPlayerMoves[1].y = nextCoord->y;
-            bufferPlayerMoves[1].up = nextCoord->up;
-            communication.free(nextCoord);
-            if(bufferPlayerMoves[1].up) {
-              
-              status = constants::TWOUP;
-            } else {
-              if(bufferPlayerMoves[0].x == bufferPlayerMoves[1].x && bufferPlayerMoves[0].y == bufferPlayerMoves[1].y) {
-                ledsOff();
-                status = constants::START;
-              } else {
-                status = constants::SEND;
-              }
-            }
-          }
-          //TODO: ONEUP-Case
-          break;
-
-        case constants::TWOUP:
-          printf("Twoup\n");
-          ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
-          evtCommunication = communication.get();
-          if(evtCommunication.status == osEventMail) {
-            coords* nextCoord = (coords*) evtCommunication.value.p;
-            bufferPlayerMoves[2].x = nextCoord->x;
-            bufferPlayerMoves[2].y = nextCoord->y;
-            bufferPlayerMoves[2].up = nextCoord->up;
-            communication.free(nextCoord);
-            if(bufferPlayerMoves[2].up) { 
-              addPendingMove(bufferPlayerMoves[2].x, bufferPlayerMoves[2].y, !bufferPlayerMoves[2].up);
-              addPendingMove(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, !bufferPlayerMoves[1].up);              
-              addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
-
-              lcd.cls();
-              lcd.printf("3 Figuren anheben nicht möglich!\n");
-              status = constants::WAITINGPLAYER;
-            } else {
-              //TODO: Zwei Moves/Coords vergleichen als Hilfsfunktion
-              if(bufferPlayerMoves[1].x == bufferPlayerMoves[2].x && bufferPlayerMoves[1].y == bufferPlayerMoves[2].y) {
-                status = constants::SEND;
-                ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, constants::OFF);
-                wait(constants::TIMEOUT_BLINK);
-              } else {
-                addPendingMove(bufferPlayerMoves[2].x, bufferPlayerMoves[2].y, !bufferPlayerMoves[2].up);
-                addPendingMove(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, !bufferPlayerMoves[1].up);
-                addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
-
-                lcd.cls();
-                lcd.printf("Figur muss an gleiche Stelle wie Geschlagene\n");
-                status = constants::WAITINGPLAYER;
-              }
-            }
-          }
-          //TODO: TWOUP-Case
-          break;
-
-        case constants::SEND:
-          printf("Send\n");
-
-          ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
-
-          socket.open(&net);
-          socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
-
-          sendBuffer[0] = protocol::TURN;
-          sendBuffer[1] = bufferPlayerMoves[0].x;
-          sendBuffer[2] = bufferPlayerMoves[0].y; 
-          sendBuffer[3] = bufferPlayerMoves[1].x;
-          sendBuffer[4] = bufferPlayerMoves[1].y;
-
-          socket.send(sendBuffer, sizeof sendBuffer);
+        tcpSend(protocol::START, gameType, 0, 0, 0);
+        rcount = socket.recv(rbuffer, sizeof rbuffer);
+        socket.close();      
         
-          status = constants::WAITINGSERVER;
-          break;
-        
-        case constants::WAITINGSERVER:
-          printf("Waitingserver\n");
-          ledsOff();
-
-          rcount = socket.recv(rbuffer, sizeof rbuffer);
-          socket.close();
-
-          offset = 0;
-          if(!(rbuffer[0] & protocol::ERROR)) {
-            if(!(rbuffer[0] & protocol::ILLEGAL)) {
-              if(rbuffer[0] & protocol::CASTLING) {
-                ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-                ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-                lcd.cls();
-                lcd.printf("Rochade: Turm setzen\n");
-
-                printf("Player: Castling\n");
+        if(rbuffer[0] == 0) {
+          status = constants::START;
+        }  else {
+          status = constants::ERROR;
+        }
+    
+        break;
 
 
-                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
-                offset += 4;
-              }
+      case constants::START:
+        printf("Start\n");
+        evtCommunication = communication.get();
+        if(evtCommunication.status == osEventMail) {
+          coords* nextCoord = (coords*) evtCommunication.value.p;
+          bufferPlayerMoves[0].x = nextCoord->x;
+          bufferPlayerMoves[0].y = nextCoord->y;
+          bufferPlayerMoves[0].up = nextCoord->up;
+          communication.free(nextCoord);
+          if(bufferPlayerMoves[0].up) {
+            status = constants::ONEUP;
+          } else {
+            addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
+            lcd.cls();
+            lcd.printf("Bitte Figur anheben.\n");
+            status = constants::WAITINGPLAYER;
+          }
+        }
+        break;
 
-              if(rbuffer[0] & protocol::ENPASSANT) {
-                ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-
-                printf("Player: Enpassant\n");
-
-                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                offset += 2;
-
-                lcd.cls();
-                lcd.printf("En passante\n");
-                
-              }
-
-              if(rbuffer[0] & protocol::PROMOTION) {
-                isPromoted = true;
-                sendBuffer[0] = protocol::PROMOTION;
-
-                ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-                while ( (buttonQueen.read() && buttonKnight.read() && buttonBishop.read() && buttonRook.read() )) {
-                  wait(0.1);
-                }
-
-                if(!buttonQueen.read()) {
-                  sendBuffer[1] = protocol::QUEEN;
-                } else if (!buttonKnight.read()) {
-                  sendBuffer[1] = protocol::KNIGHT;
-                } else if (!buttonBishop.read()) {
-                  sendBuffer[1] = protocol::BISHOP;
-                } else if (!buttonRook.read()) {
-                  sendBuffer[1] = protocol::ROOK;
-                }
-
-                socket.open(&net);
-                socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
-                socket.send(sendBuffer, sizeof sendBuffer);
-
-                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
-
-                offset += 2;
-
-                //LCDO
-                //TODO: Promotion
-              }
-
-              if(rbuffer[0] & protocol::CHECK) {
-                ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-
-                printf("Player: Check\n");
-
-                offset += 2;
-              }
-
-              if(rbuffer[0] & protocol::CHECKMATE) {
-                ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-
-                printf("Player: Checkmate\n");
-
-
-                //TODO: End of game!
-              }
-
-              //TODO: Evtl. Delay vor dem AI-Move?
-
+      case constants::ONEUP:
+        printf("Oneup\n");
+        ledToggle(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y);
+        evtCommunication = communication.get();
+        if(evtCommunication.status == osEventMail) {
+          coords* nextCoord = (coords*) evtCommunication.value.p;
+          bufferPlayerMoves[1].x = nextCoord->x;
+          bufferPlayerMoves[1].y = nextCoord->y;
+          bufferPlayerMoves[1].up = nextCoord->up;
+          communication.free(nextCoord);
+          if(bufferPlayerMoves[1].up) {
+            
+            status = constants::TWOUP;
+          } else {
+            if(bufferPlayerMoves[0].x == bufferPlayerMoves[1].x && bufferPlayerMoves[0].y == bufferPlayerMoves[1].y) {
               ledsOff();
-              if(gameType == protocol::AI) {
-
-                // ***************************************************
-                // Ab hier AI-Move
-                // ***************************************************
-
-                offset = protocol::AI_MOVE;
-
-                if(rbuffer[0 + protocol::AI_MOVE] & protocol::ILLEGAL) {
-                  ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-                  ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-
-                  printf("AI OK\n");
-
-                  
-                  addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                  if(checkField(rbuffer[3 + offset], rbuffer[4 + offset])) addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
-                  addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
-
-                  printf("Erwarte Move\nx=%d, y=%d, UP\nx=%d, y=%d, DOWN", rbuffer[1 + offset], rbuffer[2 + offset], rbuffer[3 + offset], rbuffer[4 + offset]);
-
-                  offset += 2;
-
-                  lcd.cls();
-                  lcd.printf("KI: Normaler Move\n");
-                  
-                if(rbuffer[0 + protocol::AI_MOVE] & protocol::CASTLING) {
-                  ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-                  ledToggle(rbuffer[5 + offset], rbuffer[6 + offset]);
-
-                  printf("AI Castling\n");
-
-                  addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
-                  addPendingMove(rbuffer[5 + offset], rbuffer[6 + offset], constants::DOWN);
-
-                  offset += 6;
-                  
-                  lcd.cls();
-                  lcd.printf("KI: Rochade\n");
-                }
-
-                if(rbuffer[0 + protocol::AI_MOVE] & protocol::ENPASSANT) {
-                    ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-
-                    printf("AI Enpassant\n");
-
-                    addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
-
-                    offset += 4;
-                    
-                    lcd.cls();
-                    lcd.printf("KI: En passante\n");
-                  }
-
-                  if(rbuffer[0 + protocol::AI_MOVE] & protocol::PROMOTION) {
-                    printf("AI Promotion\n");
-
-                    addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                    addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);                
-                    
-                    offset += 6;                
-                    
-                    lcd.cls();
-                    lcd.printf("KI: Promotion\n");
-                    //LCDO
-                    //TODO: Figur zu der befördert wird anzeigen
-                  }
-
-                }
-
-
-
-                if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECK) {
-                  ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-                  
-                  printf("AI Check\n");
-
-                  //LCDO
-                  //TODO: Vorher Delay?
-                }
-
-                if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECKMATE) {
-                  ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-
-                  printf("AI Checkmate\n");
-
-                  //LCDO
-                  //TODO: Vorher Delay?
-                  //TODO: End of Game
-                }
-
-              }
-
-            if(!isPromoted && gameType == protocol::PVP) {
-              player = !player;
-            }
-
+              status = constants::START;
             } else {
-              //Illegal Playermove
+              status = constants::SEND;
+            }
+          }
+        }
+        //TODO: ONEUP-Case
+        break;
 
-              printf("Player Illegal\n");
+      case constants::TWOUP:
+        printf("Twoup\n");
+        ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
+        evtCommunication = communication.get();
+        if(evtCommunication.status == osEventMail) {
+          coords* nextCoord = (coords*) evtCommunication.value.p;
+          bufferPlayerMoves[2].x = nextCoord->x;
+          bufferPlayerMoves[2].y = nextCoord->y;
+          bufferPlayerMoves[2].up = nextCoord->up;
+          communication.free(nextCoord);
+          if(bufferPlayerMoves[2].up) { 
+            addPendingMove(bufferPlayerMoves[2].x, bufferPlayerMoves[2].y, !bufferPlayerMoves[2].up);
+            addPendingMove(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, !bufferPlayerMoves[1].up);              
+            addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
 
+            lcd.cls();
+            lcd.printf("3 Figuren anheben nicht möglich!\n");
+            status = constants::WAITINGPLAYER;
+          } else {
+            //TODO: Zwei Moves/Coords vergleichen als Hilfsfunktion
+            if(bufferPlayerMoves[1].x == bufferPlayerMoves[2].x && bufferPlayerMoves[1].y == bufferPlayerMoves[2].y) {
+              status = constants::SEND;
+              ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, constants::OFF);
+              wait(constants::TIMEOUT_BLINK);
+            } else {
+              addPendingMove(bufferPlayerMoves[2].x, bufferPlayerMoves[2].y, !bufferPlayerMoves[2].up);
+              addPendingMove(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, !bufferPlayerMoves[1].up);
+              addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
+
+              lcd.cls();
+              lcd.printf("Figur muss an gleiche Stelle wie Geschlagene\n");
+              status = constants::WAITINGPLAYER;
+            }
+          }
+        }
+        //TODO: TWOUP-Case
+        break;
+
+      case constants::SEND:
+        printf("Send\n");
+
+        ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
+
+        tcpSend(protocol::TURN, bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
+      
+        status = constants::WAITINGSERVER;
+        break;
+      
+      case constants::WAITINGSERVER:
+        printf("Waitingserver\n");
+        ledsOff();
+
+        rcount = socket.recv(rbuffer, sizeof rbuffer);
+        socket.close();
+
+        offset = 0;
+        if(!(rbuffer[0] & protocol::ERROR)) {
+          if(!(rbuffer[0] & protocol::ILLEGAL)) {
+            if(rbuffer[0] & protocol::CASTLING) {
               ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
               ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-              
+              lcd.cls();
+              lcd.printf("Rochade: Turm setzen\n");
+
+              printf("Player: Castling\n");
+
+
               addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
               addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
-              if(bufferPlayerMoves[2].x == bufferPlayerMoves[1].x && bufferPlayerMoves[1].y == bufferPlayerMoves[2].y && bufferPlayerMoves[1].up != bufferPlayerMoves[2].up) {
-                //Hier wurde illegal geschlagen
-                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
-              }
+              offset += 4;
+            }
+
+            if(rbuffer[0] & protocol::ENPASSANT) {
+              ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+
+              printf("Player: Enpassant\n");
+
+              addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+              offset += 2;
 
               lcd.cls();
-              lcd.printf("Illegaler Move\n");
+              lcd.printf("En passante\n");
+              
             }
-          } else {
-            //TODO: ERROR - Fehlerbit vom Server gesetzt
-          }
 
-          status = constants::WAITINGPLAYER;
-          //TODO: WAITINGSERVER-Case (Warten auf Serverantwort)
-          break;
+            if(rbuffer[0] & protocol::PROMOTION) {
+              isPromoted = true;
+              char figure;
 
-        case constants::WAITINGPLAYER:
-          printf("Waitingplayer\n");
-          evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
-          printf("Waitingplayer after get1\n");
-          while(evtPendingMoves.status == osEventMail) {
-            printf("Waitingplayer in while1\n");
-            coords* nextPending = (coords*) evtPendingMoves.value.p;
-            ledToggle(nextPending->x, nextPending->y, constants::ON);
-            bool moveMade = false;
-            while(!moveMade) {
-              printf("Waitingplayer in while 2\n");
-              evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
-              printf("Waitingplayer after get2\n");
-              if(evtCommunication.status == osEventMail) {
-                coords* nextMade = (coords*) evtCommunication.value.p;
-                if((nextPending->x == nextMade->x && nextPending->y == nextMade->y && nextPending->up == nextMade->up)) {
-                  printf("%d : %d --- Move resetet", nextPending->x, nextPending->y);
-                  ledToggle(nextPending->x, nextPending->y, constants::OFF);
-                  moveMade = true;
-                  wait(constants::TIMEOUT_BLINK);
-                } else {      
-                  printf("Pending != nextMade\n");
-                  //TODO: ERROR - Spieler hat falschen Move gemacht            
-                } 
-                communication.free(nextMade);
+              ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+              while ( (buttonQueen.read() && buttonKnight.read() && buttonBishop.read() && buttonRook.read() )) {
+                wait(0.1);
               }
+
+              if(!buttonQueen.read()) {
+                figure = protocol::QUEEN;
+              } else if (!buttonKnight.read()) {
+                figure = protocol::KNIGHT;
+              } else if (!buttonBishop.read()) {
+                figure = protocol::BISHOP;
+              } else if (!buttonRook.read()) {
+                figure = protocol::ROOK;
+              }
+
+              tcpSend(protocol::PROMOTION, figure, 0, 0, 0);
+
+              addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+              addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
+
+              offset += 2;
+
+              //LCDO
+              //TODO: Promotion
             }
-            pendingMoves.free(nextPending);
-            evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
+
+            if(rbuffer[0] & protocol::CHECK) {
+              ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+
+              printf("Player: Check\n");
+
+              offset += 2;
+            }
+
+            if(rbuffer[0] & protocol::CHECKMATE) {
+              ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+
+              printf("Player: Checkmate\n");
+
+
+              //TODO: End of game!
+            }
+
+            //TODO: Evtl. Delay vor dem AI-Move?
+
+            ledsOff();
+            if(gameType == protocol::AI) {
+
+              // ***************************************************
+              // Ab hier AI-Move
+              // ***************************************************
+
+              offset = protocol::AI_MOVE;
+
+              if(rbuffer[0 + protocol::AI_MOVE] & protocol::ILLEGAL) {
+                ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+                ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+
+                printf("AI OK\n");
+
+                
+                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                if(checkField(rbuffer[3 + offset], rbuffer[4 + offset])) addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
+                addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
+
+                printf("Erwarte Move\nx=%d, y=%d, UP\nx=%d, y=%d, DOWN", rbuffer[1 + offset], rbuffer[2 + offset], rbuffer[3 + offset], rbuffer[4 + offset]);
+
+                offset += 2;
+
+                lcd.cls();
+                lcd.printf("KI: Normaler Move\n");
+                
+              if(rbuffer[0 + protocol::AI_MOVE] & protocol::CASTLING) {
+                ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                ledToggle(rbuffer[5 + offset], rbuffer[6 + offset]);
+
+                printf("AI Castling\n");
+
+                addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
+                addPendingMove(rbuffer[5 + offset], rbuffer[6 + offset], constants::DOWN);
+
+                offset += 6;
+                
+                lcd.cls();
+                lcd.printf("KI: Rochade\n");
+              }
+
+              if(rbuffer[0 + protocol::AI_MOVE] & protocol::ENPASSANT) {
+                  ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+
+                  printf("AI Enpassant\n");
+
+                  addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
+
+                  offset += 4;
+                  
+                  lcd.cls();
+                  lcd.printf("KI: En passante\n");
+                }
+
+                if(rbuffer[0 + protocol::AI_MOVE] & protocol::PROMOTION) {
+                  printf("AI Promotion\n");
+
+                  addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                  addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);                
+                  
+                  offset += 6;                
+                  
+                  lcd.cls();
+                  lcd.printf("KI: Promotion\n");
+                  //LCDO
+                  //TODO: Figur zu der befördert wird anzeigen
+                }
+
+              }
+
+
+
+              if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECK) {
+                ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                
+                printf("AI Check\n");
+
+                //LCDO
+                //TODO: Vorher Delay?
+              }
+
+              if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECKMATE) {
+                ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+
+                printf("AI Checkmate\n");
+
+                //LCDO
+                //TODO: Vorher Delay?
+                //TODO: End of Game
+              }
+
+            }
+
+          if(!isPromoted && gameType == protocol::PVP) {
+            player = !player;
           }
-          if(isPromoted) {
-            status = constants::WAITINGSERVER;
-            isPromoted = false;
+
           } else {
-            status = constants::START;
+            //Illegal Playermove
+
+            printf("Player Illegal\n");
+
+            ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+            ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+            
+            addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+            addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
+            if(bufferPlayerMoves[2].x == bufferPlayerMoves[1].x && bufferPlayerMoves[1].y == bufferPlayerMoves[2].y && bufferPlayerMoves[1].up != bufferPlayerMoves[2].up) {
+              //Hier wurde illegal geschlagen
+              addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
+            }
+
+            lcd.cls();
+            lcd.printf("Illegaler Move\n");
           }
+        } else {
+          //TODO: ERROR - Fehlerbit vom Server gesetzt
+        }
+
+        status = constants::WAITINGPLAYER;
+        //TODO: WAITINGSERVER-Case (Warten auf Serverantwort)
         break;
-        case constants::ERROR:
-          printf("----\nError\n-----");
-          break;
-      }
+
+      case constants::WAITINGPLAYER:
+        printf("Waitingplayer\n");
+        evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
+        printf("Waitingplayer after get1\n");
+        while(evtPendingMoves.status == osEventMail) {
+          printf("Waitingplayer in while1\n");
+          coords* nextPending = (coords*) evtPendingMoves.value.p;
+          ledToggle(nextPending->x, nextPending->y, constants::ON);
+          bool moveMade = false;
+          while(!moveMade) {
+            printf("Waitingplayer in while 2\n");
+            evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
+            printf("Waitingplayer after get2\n");
+            if(evtCommunication.status == osEventMail) {
+              coords* nextMade = (coords*) evtCommunication.value.p;
+              if((nextPending->x == nextMade->x && nextPending->y == nextMade->y && nextPending->up == nextMade->up)) {
+                printf("%d : %d --- Move resetet", nextPending->x, nextPending->y);
+                ledToggle(nextPending->x, nextPending->y, constants::OFF);
+                moveMade = true;
+                wait(constants::TIMEOUT_BLINK);
+              } else {      
+                printf("Pending != nextMade\n");
+                //TODO: ERROR - Spieler hat falschen Move gemacht            
+              } 
+              communication.free(nextMade);
+            }
+          }
+          pendingMoves.free(nextPending);
+          evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
+        }
+        if(isPromoted) {
+          status = constants::WAITINGSERVER;
+          isPromoted = false;
+        } else {
+          status = constants::START;
+        }
+      break;
+      case constants::ERROR:
+        printf("----\nError\n-----");
+        break;
     }
+  }
+}
+
+void startPressed() {
+  threadGame.terminate();
+  wait(2.0);
+  threadGame.start(game_thread);
 }
