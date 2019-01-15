@@ -151,7 +151,7 @@ void checker_thread() {
         }
       }
     }
-    wait(0.1);
+    wait(constants::TIMEOUT_WHILE_LOOP);
   }
 }
 
@@ -358,7 +358,7 @@ void game_thread() {
 
               ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
               while ( (buttonQueen.read() && buttonKnight.read() && buttonBishop.read() && buttonRook.read() )) {
-                wait(0.1);
+                wait(constants::TIMEOUT_WHILE_LOOP);
               }
 
               if(!buttonQueen.read()) {

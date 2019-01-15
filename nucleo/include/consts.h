@@ -23,6 +23,7 @@ namespace constants {
 
     static const int TIMEOUT_GET_MAIL = 100;
     static const float TIMEOUT_BLINK = 0.2;
+    static const float TIMEOUT_WHILE_LOOP = 0.1;
 
     enum UpDown {
         UP = true, DOWN = false
