@@ -249,18 +249,14 @@ int main()
   coords checkmate;
   uint8_t gameEnded;
 
+  for(uint8_t y = 0; y < 8; y++) {
+    mcps[y].getChanges(MCP23017_GPIO_PORT_B); 
+  }
+  thread.start(checker_thread);
+
   while (1)
   {
       switch(status) {
-        case constants::FIRSTINIT:
-          printf("FIRSTINIT\n");            
-          for(uint8_t y = 0; y < 8; y++) {
-            mcps[y].getChanges(MCP23017_GPIO_PORT_B); 
-          }
-          thread.start(checker_thread);
-          status = constants::NEWGAME;
-        break; 
-
         case constants::NEWGAME:
           printf("NEWGAME\n");
 
