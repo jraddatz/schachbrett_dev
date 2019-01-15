@@ -180,7 +180,7 @@ bool addPendingMove(uint8_t x, uint8_t y, bool up) {
 }
 
 void game_thread() {
-  uint8_t status = constants::FIRSTINIT;
+  uint8_t status = constants::NEWGAME;
   osEvent evtCommunication;
   osEvent evtPendingMoves;
   coords bufferPlayerMoves[3];
