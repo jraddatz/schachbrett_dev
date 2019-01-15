@@ -275,7 +275,7 @@ int main()
           }
 
           socket.open(&net);
-          socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
+          socket.connect(constants::SERVER_ADDRESS, constants::SERVER_PORT);
           sendBuffer[0] = protocol::START;
           sendBuffer[1] = gameType;
           socket.send(sendBuffer, sizeof sendBuffer);
@@ -387,7 +387,7 @@ int main()
           ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
 
           socket.open(&net);
-          socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
+          socket.connect(constants::SERVER_ADDRESS, constants::SERVER_PORT);
 
           sendBuffer[0] = protocol::TURN;
           sendBuffer[1] = bufferPlayerMoves[0].x;
@@ -457,7 +457,7 @@ int main()
                 }
 
                 socket.open(&net);
-                socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
+                socket.connect(constants::SERVER_ADDRESS, constants::SERVER_PORT);
                 socket.send(sendBuffer, sizeof sendBuffer);
 
                 addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);

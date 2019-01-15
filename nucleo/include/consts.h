@@ -4,8 +4,8 @@
 #include <mbed.h>
 
 namespace constants {
-    static const char* ECHO_SERVER_ADDRESS = "192.168.2.1";
-    static const int ECHO_SERVER_PORT = 3000;
+    static const char* SERVER_ADDRESS = "192.168.2.1";
+    static const int SERVER_PORT = 3000;
 
     static const char* OWN_ADDRESS = "192.168.2.2";
     static const char* NETMASK = "255.255.255.0";
