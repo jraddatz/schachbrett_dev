@@ -37,7 +37,7 @@ namespace constants {
     static const PinName PIN_BUTTON_KNIGHT = PC_6;
     static const PinName PIN_BUTTON_BISHOP = PC_6; 
     static const PinName PIN_BUTTON_ROOK = PC_6;
-    static const PinName PIN_BUTTON_START = PC_6;
+    static const PinName PIN_BUTTON_START = PB_13;
     static const PinName PIN_BUTTON_AI = PC_6;
     static const PinName PIN_BUTTON_PVP = PB_15;
 
