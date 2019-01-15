@@ -4,12 +4,12 @@
 #include <mbed.h>
 
 namespace constants {
-    static const char* SERVER_ADDRESS = "192.168.2.1";
+    static const char* SERVER_ADDRESS = "192.168.1.102";
     static const int SERVER_PORT = 3000;
 
-    static const char* OWN_ADDRESS = "192.168.2.2";
+    static const char* OWN_ADDRESS = "192.168.1.102";
     static const char* NETMASK = "255.255.255.0";
-    static const char* GATEWAY = "192.168.2.1";
+    static const char* GATEWAY = "192.168.1.1";
 
     enum Status {
         FIRSTINIT = 0, NEWGAME = 10, BOARDSETUP = 20, START = 30, ONEUP = 40, TWOUP = 50, SEND = 60, WAITINGSERVER = 70, WAITINGPLAYER = 80, ENDGAME = 100, ERROR = 255
