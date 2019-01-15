@@ -578,6 +578,7 @@ int main()
                   printf("%d : %d --- Move resetet", nextPending->x, nextPending->y);
                   ledToggle(nextPending->x, nextPending->y, constants::OFF);
                   moveMade = true;
+                  wait(constants::TIMEOUT_BLINK);
                 } else {      
                   printf("Pending != nextMade\n");
                   //TODO: ERROR - Spieler hat falschen Move gemacht            
