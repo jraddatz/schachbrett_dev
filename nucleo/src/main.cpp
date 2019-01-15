@@ -221,7 +221,7 @@ int main()
   coords bufferPlayerMoves[3];
   bool buttonPressed;
   int gameType;
-  bool player = constants::WHITE;
+  bool player;
   while (1)
   {
       switch(status) {
@@ -236,8 +236,10 @@ int main()
 
         case constants::NEWGAME:
           printf("NEWGAME\n");
+
           lcd.cls();
           lcd.printf("Choose Mode!");
+
           buttonPressed = false;
           while (!buttonPressed) {
             if(!buttonAI.read()) {
@@ -260,7 +262,9 @@ int main()
           }  else {
             status = constants::ERROR;
           }
-          socket.close();          
+          socket.close();   
+
+          player = constants::WHITE;       
           break;
 
           case constants::BOARDSETUP:
