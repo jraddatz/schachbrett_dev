@@ -22,7 +22,7 @@ InterruptIn buttonStart(constants::PIN_BUTTON_START);
 DigitalIn buttonAI(constants::PIN_BUTTON_AI, PullUp);
 DigitalIn buttonPVP(constants::PIN_BUTTON_PVP, PullUp);
 
-Thread threadChecker;
+Thread threadChecker(osPriorityAboveNormal3);
 Thread threadGame;
 
 EthernetInterface net;
@@ -208,6 +208,7 @@ void game_thread() {
             gameType = protocol::PVP;
             buttonPressed = true;
           }
+          wait(0.1);
         }
 
         tcpSend(protocol::START, gameType, 0, 0, 0);
@@ -225,7 +226,8 @@ void game_thread() {
 
       case constants::START:
         printf("Start\n");
-        evtCommunication = communication.get();
+        evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
+        printf("Start - 2 \n");
         if(evtCommunication.status == osEventMail) {
           coords* nextCoord = (coords*) evtCommunication.value.p;
           bufferPlayerMoves[0].x = nextCoord->x;
@@ -246,7 +248,7 @@ void game_thread() {
       case constants::ONEUP:
         printf("Oneup\n");
         ledToggle(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y);
-        evtCommunication = communication.get();
+        evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
         if(evtCommunication.status == osEventMail) {
           coords* nextCoord = (coords*) evtCommunication.value.p;
           bufferPlayerMoves[1].x = nextCoord->x;
@@ -271,7 +273,7 @@ void game_thread() {
       case constants::TWOUP:
         printf("Twoup\n");
         ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
-        evtCommunication = communication.get();
+        evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
         if(evtCommunication.status == osEventMail) {
           coords* nextCoord = (coords*) evtCommunication.value.p;
           bufferPlayerMoves[2].x = nextCoord->x;
@@ -552,9 +554,13 @@ void game_thread() {
               } 
               communication.free(nextMade);
             }
+            
+            wait(0.1);
           }
           pendingMoves.free(nextPending);
           evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
+          
+          wait(0.1);
         }
         if(isPromoted) {
           status = constants::WAITINGSERVER;
@@ -562,11 +568,12 @@ void game_thread() {
         } else {
           status = constants::START;
         }
-      break;
+        break;
       case constants::ERROR:
         printf("----\nError\n-----");
         break;
     }
+    wait(0.1);
   }
 }
 
@@ -594,6 +601,7 @@ int main()
 
   threadChecker.start(checker_thread);
   threadGame.start(game_thread);
-
   printf("FIRSTINIT DONE\n");
+  for(;;){
+  }
 }
