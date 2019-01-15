@@ -92,6 +92,26 @@ void ledsOff(){
   }
 }
 
+uint8_t checkBoardSetup(){
+  ledsOff();
+  uint8_t misplaced = 0;
+  for ( uint8_t x = 0 ; x < 8; x++) {
+    for (uint8_t y = 0; y < 2; y++) {
+      if(!checkField(x,y)) {
+        ledToggle(x,y);
+        misplaced++;
+      }
+    }
+    for (uint8_t y = 6; y < 8; y++) {
+      if(!checkField(x,y)){
+        ledToggle(x,y);
+        misplaced++;
+      }
+    }
+  }
+  return misplaced;
+}
+
 /**
  * Helper Function to reset all GPIO Extender
  */
@@ -610,5 +630,6 @@ int main()
           printf("----\nError\n-----");
           break;
       }
+      wait(constants::TIMEOUT_WHILE_LOOP);
     }
 }
