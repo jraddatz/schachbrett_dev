@@ -23,6 +23,7 @@ namespace constants {
 
     static const int TIMEOUT_GET_MAIL = 100;
     static const float TIMEOUT_BLINK = 0.2;
+    static const float TIMEOUT_WHILE_LOOP = 0.1;
 
     enum UpDown {
         UP = true, DOWN = false
@@ -36,9 +37,20 @@ namespace constants {
     static const PinName PIN_BUTTON_KNIGHT = PC_6;
     static const PinName PIN_BUTTON_BISHOP = PC_6; 
     static const PinName PIN_BUTTON_ROOK = PC_6;
-    static const PinName PIN_BUTTON_START = PC_6;
+    static const PinName PIN_BUTTON_START = PB_13;
     static const PinName PIN_BUTTON_AI = PC_6;
     static const PinName PIN_BUTTON_PVP = PB_15;
+
+    static const PinName PIN_I2C_DATA = PB_9;
+    static const PinName PIN_I2C_CLOCK = PB_8;
+    static const PinName PIN_I2C_NOTRESET = PG_1;
+
+    static const PinName PIN_LCD_RESET = PG_2;
+    static const PinName PIN_LCD_ENABLE = PG_3;
+    static const PinName PIN_LCD_DATA_4 = PD_7;
+    static const PinName PIN_LCD_DATA_5 = PD_6;
+    static const PinName PIN_LCD_DATA_6 = PD_5;
+    static const PinName PIN_LCD_DATA_7 = PD_4;
 }
 
 
