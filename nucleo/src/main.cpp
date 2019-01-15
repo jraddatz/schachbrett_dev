@@ -179,27 +179,6 @@ bool addPendingMove(uint8_t x, uint8_t y, bool up) {
   return true;
 }
 
-int main() 
-{
-  //TODO: Setup-Routine?
-  // setup();
-  i2c.frequency(100000);
-  resetI2C(); 
-
-  buttonStart.rise(&startPressed);
-
-  net.set_network(constants::OWN_ADDRESS, constants::NETMASK, constants::GATEWAY);
-  net.connect();
-            
-  for(uint8_t y = 0; y < 8; y++) {
-    mcps[y].getChanges(MCP23017_GPIO_PORT_B); 
-  }
-  threadChecker.start(checker_thread);
-  threadGame.start(game_thread);
-
-  printf("FIRSTINIT DONE\n");
-}
-
 void game_thread() {
   uint8_t status = constants::FIRSTINIT;
   osEvent evtCommunication;
@@ -233,7 +212,7 @@ void game_thread() {
         tcpSend(protocol::START, gameType, 0, 0, 0);
         rcount = socket.recv(rbuffer, sizeof rbuffer);
         socket.close();      
-        
+
         if(rbuffer[0] == 0) {
           status = constants::START;
         }  else {
@@ -594,4 +573,25 @@ void startPressed() {
   threadGame.terminate();
   wait(2.0);
   threadGame.start(game_thread);
+}
+
+int main() 
+{
+  //TODO: Setup-Routine?
+  // setup();
+  i2c.frequency(100000);
+  resetI2C(); 
+
+  buttonStart.rise(&startPressed);
+
+  net.set_network(constants::OWN_ADDRESS, constants::NETMASK, constants::GATEWAY);
+  net.connect();
+            
+  for(uint8_t y = 0; y < 8; y++) {
+    mcps[y].getChanges(MCP23017_GPIO_PORT_B); 
+  }
+  threadChecker.start(checker_thread);
+  threadGame.start(game_thread);
+
+  printf("FIRSTINIT DONE\n");
 }
