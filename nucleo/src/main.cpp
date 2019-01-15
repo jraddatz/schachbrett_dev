@@ -193,6 +193,22 @@ bool addPendingMove(uint8_t x, uint8_t y, bool up) {
   return true;
 }
 
+void clearMails() {
+  osEvent evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
+  while(evtCommunication.status == osEventMail) {            
+    coords* nextCoord = (coords*) evtCommunication.value.p;
+    communication.free(nextCoord);
+    evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
+  }
+
+  osEvent evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
+  while(evtPendingMoves.status == osEventMail) {            
+    coords* nextCoord = (coords*) evtPendingMoves.value.p;
+    communication.free(nextCoord);
+    evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
+  }
+}
+
 char sendBuffer[5];
 int offset;
 char rbuffer[64];
@@ -273,20 +289,7 @@ int main()
 
         case constants::BOARDSETUP:
           if(checkBoardSetup() == 0) {
-            //TODO: Mails clearen rausziehen
-            evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
-            while(evtCommunication.status == osEventMail) {            
-              coords* nextCoord = (coords*) evtCommunication.value.p;
-              communication.free(nextCoord);
-              evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
-            }
-
-            evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
-            while(evtPendingMoves.status == osEventMail) {            
-              coords* nextCoord = (coords*) evtPendingMoves.value.p;
-              communication.free(nextCoord);
-              evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
-            }
+            clearMails();
             status = constants::START;
           } 
           break;
