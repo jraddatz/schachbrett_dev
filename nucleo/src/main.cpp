@@ -204,11 +204,8 @@ int main()
 {
   //TODO: Setup-Routine?
   // setup();
-  printf("MAIN start");
   i2c.frequency(100000);
   resetI2C(); 
-
-  printf("MAIN resetI2c");
 
   buttonStart.rise(&startPressed);
 
@@ -216,16 +213,12 @@ int main()
   net.set_network(constants::OWN_ADDRESS, constants::NETMASK, constants::GATEWAY);
   net.connect();
 
-  printf("MAIN Ethernet connected\n");
-
   TCPSocket socket;
 
   uint8_t status = constants::FIRSTINIT;
   osEvent evtCommunication;
   osEvent evtPendingMoves;
   coords bufferPlayerMoves[3];
-  //int count;
-  //TODO: Aufräumen?!
   bool buttonPressed;
   int gameType;
   bool player = constants::WHITE;
@@ -242,6 +235,7 @@ int main()
         break; 
 
         case constants::NEWGAME:
+          printf("NEWGAME\n");
           lcd.cls();
           lcd.printf("Choose Mode!");
           buttonPressed = false;
@@ -564,8 +558,6 @@ int main()
             }
 
             } else {
-              //Illegal Playermove
-
               printf("Player Illegal\n");
 
               ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
@@ -574,7 +566,6 @@ int main()
               addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
               addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
               if(bufferPlayerMoves[2].x == bufferPlayerMoves[1].x && bufferPlayerMoves[1].y == bufferPlayerMoves[2].y && bufferPlayerMoves[1].up != bufferPlayerMoves[2].up) {
-                //Hier wurde illegal geschlagen
                 addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
               }
 
@@ -582,7 +573,7 @@ int main()
               lcd.printf("Illegaler Move\n");
             }
           } else {
-            //TODO: ERROR - Fehlerbit vom Server gesetzt
+            status = constants::ERROR;
           }
 
           status = constants::WAITINGPLAYER;
@@ -592,20 +583,15 @@ int main()
         case constants::WAITINGPLAYER:
           printf("Waitingplayer\n");
           evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
-          printf("Waitingplayer after get1\n");
           while(evtPendingMoves.status == osEventMail) {
-            printf("Waitingplayer in while1\n");
             coords* nextPending = (coords*) evtPendingMoves.value.p;
             ledToggle(nextPending->x, nextPending->y, constants::ON);
             bool moveMade = false;
             while(!moveMade) {
-              printf("Waitingplayer in while 2\n");
               evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
-              printf("Waitingplayer after get2\n");
               if(evtCommunication.status == osEventMail) {
                 coords* nextMade = (coords*) evtCommunication.value.p;
                 if((nextPending->x == nextMade->x && nextPending->y == nextMade->y && nextPending->up == nextMade->up)) {
-                  printf("%d : %d --- Move resetet", nextPending->x, nextPending->y);
                   ledToggle(nextPending->x, nextPending->y, constants::OFF);
                   moveMade = true;
                   wait(constants::TIMEOUT_BLINK);
