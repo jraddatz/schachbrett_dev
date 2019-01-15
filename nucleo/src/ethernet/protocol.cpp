@@ -17,7 +17,7 @@ ServerProtocol::~ServerProtocol()
 void ServerProtocol::connect()
 {
     socket.open(&net);
-    socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
+    socket.connect(constants::SERVER_ADDRESS, constants::SERVER_PORT);
 }
 
 void ServerProtocol::startGame()
