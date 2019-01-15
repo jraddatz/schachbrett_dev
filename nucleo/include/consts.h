@@ -43,6 +43,7 @@ namespace constants {
 
     static const PinName PIN_I2C_DATA = PB_9;
     static const PinName PIN_I2C_CLOCK = PB_8;
+    static const PinName PIN_I2C_NOTRESET = PG_1;
 
     static const PinName PIN_LCD_RESET = PG_2;
     static const PinName PIN_LCD_ENABLE = PG_3;
