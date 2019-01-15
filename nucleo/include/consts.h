@@ -12,8 +12,7 @@ namespace constants {
     static const char* GATEWAY = "192.168.2.1";
 
     enum Status {
-        FIRSTINIT = 0, NEWGAME = 90, START = 99, ONEUP = 1, TWOUP = 2, SEND = 4, WAITINGSERVER = 10, WAITINGPLAYER = 20, ERROR = 255
-    };
+        FIRSTINIT = 0, NEWGAME = 90, BOARDSETUP = 95, START = 99, ONEUP = 1, TWOUP = 2, SEND = 4, WAITINGSERVER = 10, WAITINGPLAYER = 20, ERROR = 255    };
 
     enum Player {
         WHITE = true, BLACK = false

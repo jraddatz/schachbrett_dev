@@ -242,13 +242,18 @@ int main()
           socket.send(sendBuffer, sizeof sendBuffer);
           rcount = socket.recv(rbuffer, sizeof rbuffer);
           if(rbuffer[0] == 0) {
-            status = constants::START;
+            status = constants::BOARDSETUP;
           }  else {
             status = constants::ERROR;
           }
           socket.close();          
           break;
 
+          case constants::BOARDSETUP:
+            if(checkBoardSetup() == 0) {
+              status = constants::START;
+            } 
+            break;
 
         case constants::START:
           printf("Start\n");
