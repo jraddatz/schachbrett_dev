@@ -222,7 +222,8 @@ int main()
   bool buttonPressed;
   int gameType;
   bool player;
-  coord checkmate;
+  coords checkmate;
+  uint8_t gameEnded;
 
   while (1)
   {
@@ -266,6 +267,7 @@ int main()
           }
           socket.close();   
 
+          gameEnded = 0;
           player = constants::WHITE;       
           break;
 
@@ -455,14 +457,14 @@ int main()
               }
 
               if(rbuffer[0] & protocol::CHECKMATE) {
-                ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+                  ledsOff();
 
                 printf("Player: Checkmate\n");
 
-                checkmate->x = rbuffer[1 + offset];
-                checkmate->y = rbuffer[2 + offset];
+                checkmate.x = rbuffer[3 + offset];
+                checkmate.y = rbuffer[4 + offset];
 
-                status = constants::ENDGAME;
+                gameEnded = 1;
               }
 
               //TODO: Evtl. Delay vor dem AI-Move?
@@ -550,14 +552,14 @@ int main()
                 }
 
                 if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECKMATE) {
-                  ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                  ledsOff();
 
                   printf("AI Checkmate\n");
 
-                  checkmate->x = rbuffer[1 + offset];
-                  checkmate->y = rbuffer[2 + offset];
+                  checkmate.x = rbuffer[3 + offset];
+                  checkmate.y = rbuffer[4 + offset];
 
-                  status = constants::ENDGAME;
+                  gameEnded = 1;                  
                   //LCDO
                   //TODO: Vorher Delay?
                   //TODO: End of Game
@@ -617,13 +619,26 @@ int main()
             pendingMoves.free(nextPending);
             evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
           }
-          if(isPromoted) {
-            status = constants::WAITINGSERVER;
-            isPromoted = false;
+
+          if(gameEnded) {
+            status = constants::ENDGAME;
           } else {
-            status = constants::START;
+            if(isPromoted) {
+              status = constants::WAITINGSERVER;
+              isPromoted = false;
+            } else {
+              status = constants::START;
+            }
           }
         break;
+
+        case constants::ENDGAME:
+          printf("ENDGAME\n");
+          ledToggle(checkmate.x, checkmate.y, gameEnded);
+          gameEnded ^= 1;
+          wait(constants::TIMEOUT_BLINK);
+          break;
+
         case constants::ERROR:
           printf("----\nError\n-----");
           break;
