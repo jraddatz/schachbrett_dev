@@ -509,7 +509,7 @@ int main()
 
 
                 if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECK) {
-                  ledToggle(rbuffer[5 + offset], rbuffer[6 + offset]);
+                  ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
                   
                   printf("AI Check\n");
 
@@ -518,7 +518,7 @@ int main()
                 }
 
                 if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECKMATE) {
-                  ledToggle(rbuffer[5 + offset], rbuffer[6 + offset]);
+                  ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
 
                   printf("AI Checkmate\n");
 
