@@ -222,6 +222,8 @@ int main()
   bool buttonPressed;
   int gameType;
   bool player;
+  coord checkmate;
+
   while (1)
   {
       switch(status) {
@@ -457,8 +459,10 @@ int main()
 
                 printf("Player: Checkmate\n");
 
+                checkmate->x = rbuffer[1 + offset];
+                checkmate->y = rbuffer[2 + offset];
 
-                //TODO: End of game!
+                status = constants::ENDGAME;
               }
 
               //TODO: Evtl. Delay vor dem AI-Move?
@@ -550,6 +554,10 @@ int main()
 
                   printf("AI Checkmate\n");
 
+                  checkmate->x = rbuffer[1 + offset];
+                  checkmate->y = rbuffer[2 + offset];
+
+                  status = constants::ENDGAME;
                   //LCDO
                   //TODO: Vorher Delay?
                   //TODO: End of Game
@@ -580,7 +588,7 @@ int main()
             status = constants::ERROR;
           }
 
-          status = constants::WAITINGPLAYER;
+          if(status != constants::ENDGAME) status = constants::WAITINGPLAYER;
           //TODO: WAITINGSERVER-Case (Warten auf Serverantwort)
           break;
 
