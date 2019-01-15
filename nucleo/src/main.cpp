@@ -17,10 +17,13 @@ DigitalIn buttonQueen(constants::PIN_BUTTON_QUEEN, PullUp);
 DigitalIn buttonKnight(constants::PIN_BUTTON_KNIGHT, PullUp);
 DigitalIn buttonBishop(constants::PIN_BUTTON_BISHOP, PullUp);
 DigitalIn buttonRook(constants::PIN_BUTTON_ROOK, PullUp);
-//TODO: Interrupt an Start-Buton https://os.mbed.com/docs/v5.6/reference/interruptin.html
-DigitalIn buttonStart(constants::PIN_BUTTON_START, PullUp);
+InterruptIn buttonStart(constants::PIN_BUTTON_START);
 DigitalIn buttonAI(constants::PIN_BUTTON_AI, PullUp);
 DigitalIn buttonPVP(constants::PIN_BUTTON_PVP, PullUp);
+
+void startPressed() {
+
+}
 
 //TODO: Send-Methode auslagern
 
@@ -186,6 +189,7 @@ int main()
 
   printf("MAIN resetI2c");
 
+  buttonStart.rise(&startPressed);
 
   EthernetInterface net;
   net.set_network(constants::OWN_ADDRESS, constants::NETMASK, constants::GATEWAY);
