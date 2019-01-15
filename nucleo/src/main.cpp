@@ -239,7 +239,7 @@ int main()
 
   TCPSocket socket;
 
-  uint8_t status = constants::FIRSTINIT;
+  uint8_t status = constants::NEWGAME;
   osEvent evtCommunication;
   osEvent evtPendingMoves;
   coords bufferPlayerMoves[3];
