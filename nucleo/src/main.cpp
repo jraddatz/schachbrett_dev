@@ -10,7 +10,7 @@ Serial pc(USBTX, USBRX); // tx, rx
 I2C i2c(PB_9, PB_8);
 DigitalOut notReset ( PG_1 );
 uint8_t errorCode = 0;
-
+//          rs,   e   , D4  , D5  , D6  , D7
 TextLCD lcd(PG_2, PG_3, PD_7, PD_6, PD_5, PD_4); 
 
 DigitalIn buttonQueen(constants::PIN_BUTTON_QUEEN, PullUp);
@@ -72,8 +72,8 @@ uint8_t checkField (uint8_t x, uint8_t y){
   if(x >= 8 || y >= 8){
     return -1; // error
   }
-  uint8_t a = mcps[x].readGPIO(MCP23017_GPIO_PORT_A);
-  return a >> y & 1;
+  uint8_t a = mcps[x].readGPIO(MCP23017_GPIO_PORT_B);
+  return (a >> y & 1) ^ 1;
 }
 
 /**
@@ -259,7 +259,7 @@ int main()
             } else {
               addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
               lcd.cls();
-              lcd.printf("Bitte Figur anheben.");
+              lcd.printf("Bitte Figur anheben.\n");
               status = constants::WAITINGPLAYER;
             }
           }
@@ -306,7 +306,7 @@ int main()
               addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
 
               lcd.cls();
-              lcd.printf("3 Figuren anheben nicht möglich!");
+              lcd.printf("3 Figuren anheben nicht möglich!\n");
               status = constants::WAITINGPLAYER;
             } else {
               //TODO: Zwei Moves/Coords vergleichen als Hilfsfunktion
@@ -320,7 +320,7 @@ int main()
                 addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
 
                 lcd.cls();
-                lcd.printf("Figur muss an gleiche Stelle wie Geschlagene");
+                lcd.printf("Figur muss an gleiche Stelle wie Geschlagene\n");
                 status = constants::WAITINGPLAYER;
               }
             }
@@ -361,7 +361,7 @@ int main()
                 ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
                 ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
                 lcd.cls();
-                lcd.printf("Rochade: Turm setzen");
+                lcd.printf("Rochade: Turm setzen\n");
 
                 printf("Player: Castling\n");
 
@@ -380,7 +380,7 @@ int main()
                 offset += 2;
 
                 lcd.cls();
-                lcd.printf("En passante");
+                lcd.printf("En passante\n");
                 
               }
 
@@ -460,7 +460,7 @@ int main()
                   offset += 2;
 
                   lcd.cls();
-                  lcd.printf("KI: Normaler Move");
+                  lcd.printf("KI: Normaler Move\n");
                   
                 if(rbuffer[0 + protocol::AI_MOVE] & protocol::CASTLING) {
                   ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
@@ -474,7 +474,7 @@ int main()
                   offset += 6;
                   
                   lcd.cls();
-                  lcd.printf("KI: Rochade");
+                  lcd.printf("KI: Rochade\n");
                 }
 
                 if(rbuffer[0 + protocol::AI_MOVE] & protocol::ENPASSANT) {
@@ -487,7 +487,7 @@ int main()
                     offset += 4;
                     
                     lcd.cls();
-                    lcd.printf("KI: En passante");
+                    lcd.printf("KI: En passante\n");
                   }
 
                   if(rbuffer[0 + protocol::AI_MOVE] & protocol::PROMOTION) {
@@ -499,7 +499,7 @@ int main()
                     offset += 6;                
                     
                     lcd.cls();
-                    lcd.printf("KI: Promotion");
+                    lcd.printf("KI: Promotion\n");
                     //LCDO
                     //TODO: Figur zu der befördert wird anzeigen
                   }
@@ -549,7 +549,7 @@ int main()
               }
 
               lcd.cls();
-              lcd.printf("Illegaler Move");
+              lcd.printf("Illegaler Move\n");
             }
           } else {
             //TODO: ERROR - Fehlerbit vom Server gesetzt
