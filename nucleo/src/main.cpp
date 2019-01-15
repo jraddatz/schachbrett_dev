@@ -114,6 +114,14 @@ typedef struct {
   bool up;
 } coords;
 
+/**
+ * Sends a TCP-telegram consisting the given bytes to the server
+ * @param byte0 Commandbyte
+ * @param byte1 Gamemode or first x-coordinate
+ * @param byte2 0 or first y-coordinate
+ * @param byte3 0 or second x-coordinate
+ * @param byte4 0 or second y-coordinate
+ */
 void tcpSend(char byte0, char byte1, char byte2, char byte3, char byte4) {
   socket.open(&net);
   socket.connect(constants::ECHO_SERVER_ADDRESS, constants::ECHO_SERVER_PORT);
@@ -254,7 +262,6 @@ void game_thread() {
           bufferPlayerMoves[1].up = nextCoord->up;
           communication.free(nextCoord);
           if(bufferPlayerMoves[1].up) {
-            
             status = constants::TWOUP;
           } else {
             if(bufferPlayerMoves[0].x == bufferPlayerMoves[1].x && bufferPlayerMoves[0].y == bufferPlayerMoves[1].y) {
