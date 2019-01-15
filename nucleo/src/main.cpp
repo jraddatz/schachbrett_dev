@@ -92,6 +92,11 @@ void ledsOff(){
   }
 }
 
+/**
+ * Checks if the sensors of all startfields are occupied
+ * Turns the LED of the not occupied fields on
+ * @return number of misplaced figures
+ */
 uint8_t checkBoardSetup(){
   ledsOff();
   uint8_t misplaced = 0;
