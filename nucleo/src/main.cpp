@@ -7,11 +7,12 @@
 #include "consts.h"
 
 Serial pc(USBTX, USBRX); // tx, rx
-I2C i2c(PB_9, PB_8);
-DigitalOut notReset ( PG_1 );
+I2C i2c(constants::PIN_I2C_DATA, constants::PIN_I2C_CLOCK);
+DigitalOut notReset (constants::PIN_I2C_NOTRESET);
 uint8_t errorCode = 0;
 //          rs,   e   , D4  , D5  , D6  , D7
-TextLCD lcd(PG_2, PG_3, PD_7, PD_6, PD_5, PD_4); 
+TextLCD lcd(constants::PIN_LCD_RESET, constants::PIN_LCD_ENABLE, constants::PIN_LCD_DATA_4, 
+constants::PIN_LCD_DATA_5, constants::PIN_LCD_DATA_6, constants::PIN_LCD_DATA_7); 
 
 DigitalIn buttonQueen(constants::PIN_BUTTON_QUEEN, PullUp);
 DigitalIn buttonKnight(constants::PIN_BUTTON_KNIGHT, PullUp);
@@ -590,6 +591,7 @@ int main()
   for(uint8_t y = 0; y < 8; y++) {
     mcps[y].getChanges(MCP23017_GPIO_PORT_B); 
   }
+
   threadChecker.start(checker_thread);
   threadGame.start(game_thread);
 
