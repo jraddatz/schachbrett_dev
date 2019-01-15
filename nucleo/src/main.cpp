@@ -271,11 +271,25 @@ int main()
           player = constants::WHITE;       
           break;
 
-          case constants::BOARDSETUP:
-            if(checkBoardSetup() == 0) {
-              status = constants::START;
-            } 
-            break;
+        case constants::BOARDSETUP:
+          if(checkBoardSetup() == 0) {
+            //TODO: Mails clearen rausziehen
+            evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
+            while(evtCommunication.status == osEventMail) {            
+              coords* nextCoord = (coords*) evtCommunication.value.p;
+              communication.free(nextCoord);
+              evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
+            }
+
+            evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
+            while(evtPendingMoves.status == osEventMail) {            
+              coords* nextCoord = (coords*) evtPendingMoves.value.p;
+              communication.free(nextCoord);
+              evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
+            }
+            status = constants::START;
+          } 
+          break;
 
         case constants::START:
           printf("Start\n");
