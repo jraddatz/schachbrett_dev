@@ -193,6 +193,9 @@ bool addPendingMove(uint8_t x, uint8_t y, bool up) {
   return true;
 }
 
+/**
+ * Clears the communication and pendingMoves Mails
+ */
 void clearMails() {
   osEvent evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
   while(evtCommunication.status == osEventMail) {            
@@ -204,7 +207,7 @@ void clearMails() {
   osEvent evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
   while(evtPendingMoves.status == osEventMail) {            
     coords* nextCoord = (coords*) evtPendingMoves.value.p;
-    communication.free(nextCoord);
+    pendingMoves.free(nextCoord);
     evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
   }
 }
