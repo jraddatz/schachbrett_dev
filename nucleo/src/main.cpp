@@ -22,10 +22,6 @@ InterruptIn buttonStart(constants::PIN_BUTTON_START);
 DigitalIn buttonAI(constants::PIN_BUTTON_AI, PullUp);
 DigitalIn buttonPVP(constants::PIN_BUTTON_PVP, PullUp);
 
-void startPressed() {
-
-}
-
 //TODO: Send-Methode auslagern
 
 MCP23017 mcps[8] = {
@@ -217,11 +213,23 @@ void clearMails() {
   }
 }
 
+uint8_t status;
+bool buttonPressed;
+Thread thread;
+
+void startPressed() {
+  printf("INTERRUPTUS\n");
+  thread.terminate();
+  thread.start(checker_thread);
+  clearMails();
+  buttonPressed = true;
+  status = constants::NEWGAME;
+}
+
 char sendBuffer[5];
 int offset;
 char rbuffer[64];
 int rcount;
-Thread thread;
 bool isPromoted = false;
 
 int main() 
@@ -239,11 +247,10 @@ int main()
 
   TCPSocket socket;
 
-  uint8_t status = constants::FIRSTINIT;
+  status = constants::NEWGAME;
   osEvent evtCommunication;
   osEvent evtPendingMoves;
   coords bufferPlayerMoves[3];
-  bool buttonPressed;
   int gameType;
   bool player;
   coords checkmate;
