@@ -295,7 +295,9 @@ int main()
           if(checkBoardSetup() == 0) {
             clearMails();
             status = constants::START;
-          } 
+          }
+
+          wait(constants::TIMEOUT_BOARDSETUP);
           break;
 
         case constants::START:

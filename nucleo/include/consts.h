@@ -22,6 +22,7 @@ namespace constants {
     static const char FIELDS[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
 
     static const int TIMEOUT_GET_MAIL = 100;
+    static const float TIMEOUT_BOARDSETUP = 0.5;
     static const float TIMEOUT_BLINK = 0.2;
     static const float TIMEOUT_WHILE_LOOP = 0.1;
 
