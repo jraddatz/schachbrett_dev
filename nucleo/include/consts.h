@@ -34,10 +34,10 @@ namespace constants {
         ON = 1, OFF = 0
     };
 
-    static const PinName PIN_BUTTON_QUEEN = PC_6;
-    static const PinName PIN_BUTTON_KNIGHT = PC_6;
-    static const PinName PIN_BUTTON_BISHOP = PC_6; 
-    static const PinName PIN_BUTTON_ROOK = PC_6;
+    static const PinName PIN_BUTTON_QUEEN = PB_12;
+    static const PinName PIN_BUTTON_KNIGHT = PA_15;
+    static const PinName PIN_BUTTON_BISHOP = PC_7; 
+    static const PinName PIN_BUTTON_ROOK = PB_5;
     static const PinName PIN_BUTTON_START = PB_13;
     static const PinName PIN_BUTTON_AI = PC_6;
     static const PinName PIN_BUTTON_PVP = PB_15;
