@@ -85,8 +85,7 @@ PinName d4, PinName d5, PinName d6, PinName d7)
     rs=0;
     rw=1;
  
-    send(0x20, true); // 4 bits
-    send(0x28, true); // 4 bits, 2 lines, 5x7 dots
+    send(0x08, true); // 4 bits, 2 lines, 5x7 dots
     send(0x0C, true); // display on, cursor on, blinking on
     send(0x01, true); // clear display
     send(0x06, true); // increase, not shifted
@@ -101,8 +100,7 @@ KS0070B::KS0070B(PinName pin_e) : e(PB_6) , rw(PB_6), rs(PB_6), databus(PB_6)
     rs=0;
     rw=1;
  
-    send(0x20, true); // 4 bits
-    send(0x28, true); // 4 bits, 2 lines, 5x7 dots
+    send(0x08, true); // 4 bits, 2 lines, 5x7 dots
     send(0x0C, true); // display on, cursor on, blinking on
     send(0x01, true); // clear display
     send(0x06, true); // increase, not shifted
