@@ -411,18 +411,11 @@ int main()
 
           ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
 
-          socket.open(&net);
-          socket.connect(constants::SERVER_ADDRESS, constants::SERVER_PORT);
-
-          sendBuffer[0] = protocol::TURN;
-          sendBuffer[1] = bufferPlayerMoves[0].x;
-          sendBuffer[2] = bufferPlayerMoves[0].y; 
-          sendBuffer[3] = bufferPlayerMoves[1].x;
-          sendBuffer[4] = bufferPlayerMoves[1].y;
-
-          socket.send(sendBuffer, sizeof sendBuffer);
-        
-          status = constants::WAITINGSERVER;
+          if(sendTelegram(&socket, protocol::TURN, bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, bufferPlayerMoves[1].x, bufferPlayerMoves[1].y) == 1) {
+            status = constants::WAITINGSERVER;
+          } else {
+            status = constants::ERROR;
+          }
           break;
         
         case constants::WAITINGSERVER:
