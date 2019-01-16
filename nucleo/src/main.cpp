@@ -457,34 +457,37 @@ int main()
 
               if(rbuffer[0] & protocol::PROMOTION) {
                 isPromoted = true;
-                sendBuffer[0] = protocol::PROMOTION;
 
                 ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
                 while ( (buttonQueen.read() && buttonKnight.read() && buttonBishop.read() && buttonRook.read() )) {
                   wait(0.1);
                 }
 
-                if(!buttonQueen.read()) {
-                  sendBuffer[1] = protocol::QUEEN;
-                } else if (!buttonKnight.read()) {
-                  sendBuffer[1] = protocol::KNIGHT;
-                } else if (!buttonBishop.read()) {
-                  sendBuffer[1] = protocol::BISHOP;
-                } else if (!buttonRook.read()) {
-                  sendBuffer[1] = protocol::ROOK;
+                {
+                  uint8_t promotionChar;
+
+                  if(!buttonQueen.read()) {
+                    promotionChar = protocol::QUEEN;
+                  } else if (!buttonKnight.read()) {
+                    promotionChar = protocol::KNIGHT;
+                  } else if (!buttonBishop.read()) {
+                    promotionChar = protocol::BISHOP;
+                  } else if (!buttonRook.read()) {
+                    promotionChar = protocol::ROOK;
+                  }
+
+                  if(sendTelegram(&socket, protocol::PROMOTION, promotionChar, 0, 0, 0) == 1) {
+                    addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                    addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
+
+                    offset += 2;
+
+                    //LCDO
+                    //TODO: Promotion
+                  } else {
+                    status = constants::ERROR;
+                  }
                 }
-
-                socket.open(&net);
-                socket.connect(constants::SERVER_ADDRESS, constants::SERVER_PORT);
-                socket.send(sendBuffer, sizeof sendBuffer);
-
-                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
-
-                offset += 2;
-
-                //LCDO
-                //TODO: Promotion
               }
 
               if(rbuffer[0] & protocol::CHECK) {
@@ -505,8 +508,6 @@ int main()
 
                 gameEnded = 1;
               }
-
-              //TODO: Evtl. Delay vor dem AI-Move?
 
               ledsOff();
               if(gameType == protocol::AI) {
@@ -587,7 +588,6 @@ int main()
                   printf("AI Check\n");
 
                   //LCDO
-                  //TODO: Vorher Delay?
                 }
 
                 if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECKMATE) {
@@ -600,8 +600,6 @@ int main()
 
                   gameEnded = 1;                  
                   //LCDO
-                  //TODO: Vorher Delay?
-                  //TODO: End of Game
                 }
 
               }
@@ -629,7 +627,7 @@ int main()
             status = constants::ERROR;
           }
 
-          if(status != constants::ENDGAME) status = constants::WAITINGPLAYER;
+          if(status != constants::ENDGAME && status != constants::ERROR) status = constants::WAITINGPLAYER;
           //TODO: WAITINGSERVER-Case (Warten auf Serverantwort)
           break;
 
