@@ -421,6 +421,7 @@ int main()
           if(socket.recv(rbuffer, sizeof rbuffer) < 0) {
               status = constants::ERROR;
           } else {
+            socket.close();
             offset = 0;
             if(!(rbuffer[0] & protocol::ERROR)) {
               if(!(rbuffer[0] & protocol::ILLEGAL)) {
@@ -619,7 +620,6 @@ int main()
               status = constants::ERROR;
             }
           }  
-          socket.close(); 
 
           if(status != constants::ENDGAME && status != constants::ERROR) status = constants::WAITINGPLAYER;
           break;
