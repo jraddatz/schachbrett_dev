@@ -234,7 +234,7 @@ int main()
   buttonStart.rise(&startPressed);
 
   EthernetInterface net;
-  net.set_network(constants::OWN_ADDRESS, constants::NETMASK, constants::GATEWAY);
+  //net.set_network(constants::OWN_ADDRESS, constants::NETMASK, constants::GATEWAY);
   net.connect();
 
   TCPSocket socket;
@@ -641,7 +641,7 @@ int main()
                   moveMade = true;
                   wait(constants::TIMEOUT_BLINK);
                 } else {      
-                  printf("Pending != nextMade\n");
+                  //printf("Pending != nextMade\n");
                   //TODO: ERROR - Spieler hat falschen Move gemacht            
                 } 
                 communication.free(nextMade);
