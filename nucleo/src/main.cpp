@@ -10,6 +10,14 @@ Serial pc(USBTX, USBRX); // tx, rx
 I2C i2c(constants::PIN_I2C_DATA, constants::PIN_I2C_CLOCK);
 DigitalOut notReset (constants::PIN_I2C_NOTRESET);
 uint8_t errorCode = 0;
+
+MCP23017 mcps[8] = {
+  MCP23017(0 , i2c ),MCP23017(1 , i2c ),
+  MCP23017(2 , i2c ),MCP23017(3 , i2c ),
+  MCP23017(4 , i2c ),MCP23017(5 , i2c ),
+  MCP23017(6 , i2c ),MCP23017(7 , i2c )
+};
+
 //          rs,   e   , D4  , D5  , D6  , D7
 TextLCD lcd(constants::PIN_LCD_RESET, constants::PIN_LCD_ENABLE, constants::PIN_LCD_DATA_4, 
 constants::PIN_LCD_DATA_5, constants::PIN_LCD_DATA_6, constants::PIN_LCD_DATA_7); 
@@ -18,22 +26,29 @@ DigitalIn buttonQueen(constants::PIN_BUTTON_QUEEN, PullUp);
 DigitalIn buttonKnight(constants::PIN_BUTTON_KNIGHT, PullUp);
 DigitalIn buttonBishop(constants::PIN_BUTTON_BISHOP, PullUp);
 DigitalIn buttonRook(constants::PIN_BUTTON_ROOK, PullUp);
-InterruptIn buttonStart(constants::PIN_BUTTON_START);
 DigitalIn buttonAI(constants::PIN_BUTTON_AI, PullUp);
 DigitalIn buttonPVP(constants::PIN_BUTTON_PVP, PullUp);
+
+InterruptIn buttonStart(constants::PIN_BUTTON_START);
+
+EthernetInterface net;
+
+/**
+ * struct for the move of a single figure
+ */
+typedef struct {
+  uint8_t x;
+  uint8_t y;
+  bool up;
+} coords;
+
+Mail<coords, 10> communication;
+Mail<coords, 10> pendingMoves;
+
 
 void startPressed() {
 
 }
-
-//TODO: Send-Methode auslagern
-
-MCP23017 mcps[8] = {
-  MCP23017(0 , i2c ),MCP23017(1 , i2c ),
-  MCP23017(2 , i2c ),MCP23017(3 , i2c ),
-  MCP23017(4 , i2c ),MCP23017(5 , i2c ),
-  MCP23017(6 , i2c ),MCP23017(7 , i2c )
-};
 
 /**
  * TODO: Funktion um x,y Koordinaten in String umzuformen
@@ -131,16 +146,6 @@ void resetI2C(){
 }
 
 /**
- * struct for the move of a single figure
- */
-typedef struct {
-  uint8_t x;
-  uint8_t y;
-  bool up;
-} coords;
-
-Mail<coords, 10> communication;
-/**
  * Thread for checking the GPIO Extenders. If there is a Sensor which did change, there will be a message written to the Communication Mail.
  */
 void checker_thread() {
@@ -173,8 +178,6 @@ void checker_thread() {
     wait(constants::TIMEOUT_WHILE_LOOP); 
   }
 }
-
-Mail<coords, 10> pendingMoves;
 
 //TODO: bool in uint umstellen?
 /**
@@ -217,8 +220,6 @@ void clearMails() {
   }
 }
 
-EthernetInterface net;
-
 uint8_t sendTelegram(TCPSocket* socket, char commandByte, char byte1, char byte2, char byte3, char byte4) {
   if (socket->open(&net) != 0) {
     return -1;
@@ -235,13 +236,6 @@ uint8_t sendTelegram(TCPSocket* socket, char commandByte, char byte1, char byte2
     }
   }
 }
-
-char sendBuffer[5];
-int offset;
-char rbuffer[64];
-int rcount;
-Thread thread;
-bool isPromoted = false;
 
 int main() 
 {
@@ -264,8 +258,13 @@ int main()
   bool buttonPressed;
   int gameType;
   bool player;
+  bool isPromoted = false;
   coords checkmate;
   uint8_t gameEnded;
+  int offset;
+  char rbuffer[64];
+  int rcount;
+  Thread thread;
 
   for(uint8_t y = 0; y < 8; y++) {
     mcps[y].getChanges(MCP23017_GPIO_PORT_B); 
@@ -529,8 +528,6 @@ int main()
                   if(checkField(rbuffer[3 + offset], rbuffer[4 + offset])) addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
                   addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
 
-                  printf("Erwarte Move\nx=%d, y=%d, UP\nx=%d, y=%d, DOWN", rbuffer[1 + offset], rbuffer[2 + offset], rbuffer[3 + offset], rbuffer[4 + offset]);
-
                   offset += 2;
 
                   lcd.cls();
@@ -628,7 +625,6 @@ int main()
           }
 
           if(status != constants::ENDGAME && status != constants::ERROR) status = constants::WAITINGPLAYER;
-          //TODO: WAITINGSERVER-Case (Warten auf Serverantwort)
           break;
 
         case constants::WAITINGPLAYER:
@@ -645,10 +641,7 @@ int main()
                 if((nextPending->x == nextMade->x && nextPending->y == nextMade->y && nextPending->up == nextMade->up)) {
                   ledToggle(nextPending->x, nextPending->y, constants::OFF);
                   moveMade = true;
-                  wait(constants::TIMEOUT_BLINK);
-                } else {      
-                  //printf("Pending != nextMade\n");
-                  //TODO: ERROR - Spieler hat falschen Move gemacht            
+                  wait(constants::TIMEOUT_BLINK);   
                 } 
                 communication.free(nextMade);
               }
