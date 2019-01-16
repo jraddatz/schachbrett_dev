@@ -3,7 +3,8 @@
 #include "ethernet/protocol.h"
 #include <SerialWireOutput.h>
 #include "hardware/MCP23017.h"
-#include "TextLCD.h"
+//#include "TextLCD.h"
+#include "hardware/LCD162C.h"
 #include "consts.h"
 
 Serial pc(USBTX, USBRX); // tx, rx
@@ -11,8 +12,10 @@ I2C i2c(constants::PIN_I2C_DATA, constants::PIN_I2C_CLOCK);
 DigitalOut notReset (constants::PIN_I2C_NOTRESET);
 uint8_t errorCode = 0;
 //          rs,   e   , D4  , D5  , D6  , D7
-TextLCD lcd(constants::PIN_LCD_RESET, constants::PIN_LCD_ENABLE, constants::PIN_LCD_DATA_4, 
-constants::PIN_LCD_DATA_5, constants::PIN_LCD_DATA_6, constants::PIN_LCD_DATA_7); 
+//TextLCD lcd(constants::PIN_LCD_RESET, constants::PIN_LCD_ENABLE, constants::PIN_LCD_DATA_4, constants::PIN_LCD_DATA_5, constants::PIN_LCD_DATA_6, constants::PIN_LCD_DATA_7);
+LCD162C lcd (constants::PIN_LCD_RESET, constants::PIN_LCD_RW, constants::PIN_LCD_ENABLE, 
+constants::PIN_LCD_DATA_0, constants::PIN_LCD_DATA_1, constants::PIN_LCD_DATA_2, constants::PIN_LCD_DATA_3, 
+constants::PIN_LCD_DATA_4, constants::PIN_LCD_DATA_5, constants::PIN_LCD_DATA_6, constants::PIN_LCD_DATA_7);
 
 DigitalIn buttonQueen(constants::PIN_BUTTON_QUEEN, PullUp);
 DigitalIn buttonKnight(constants::PIN_BUTTON_KNIGHT, PullUp);
@@ -261,7 +264,7 @@ int main()
           printf("NEWGAME\n");
 
           lcd.cls();
-          lcd.printf("Choose Mode!");
+          lcd.print("Choose Mode!");
 
           buttonPressed = false;
           while (!buttonPressed) {
@@ -314,7 +317,7 @@ int main()
             } else {
               addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
               lcd.cls();
-              lcd.printf("Bitte Figur anheben.\n");
+              lcd.print("Bitte Figur anheben.\n");
               status = constants::WAITINGPLAYER;
             }
           }
@@ -361,7 +364,7 @@ int main()
               addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
 
               lcd.cls();
-              lcd.printf("3 Figuren anheben nicht möglich!\n");
+              lcd.print("3 Figuren anheben nicht möglich!\n");
               status = constants::WAITINGPLAYER;
             } else {
               //TODO: Zwei Moves/Coords vergleichen als Hilfsfunktion
@@ -375,7 +378,7 @@ int main()
                 addPendingMove(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, !bufferPlayerMoves[0].up);
 
                 lcd.cls();
-                lcd.printf("Figur muss an gleiche Stelle wie Geschlagene\n");
+                lcd.print("Figur muss an gleiche Stelle wie Geschlagene\n");
                 status = constants::WAITINGPLAYER;
               }
             }
@@ -416,7 +419,7 @@ int main()
                 ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
                 ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
                 lcd.cls();
-                lcd.printf("Rochade: Turm setzen\n");
+                lcd.print("Rochade: Turm setzen\n");
 
                 printf("Player: Castling\n");
 
@@ -435,7 +438,7 @@ int main()
                 offset += 2;
 
                 lcd.cls();
-                lcd.printf("En passante\n");
+                lcd.print("En passante\n");
                 
               }
 
@@ -517,7 +520,7 @@ int main()
                   offset += 2;
 
                   lcd.cls();
-                  lcd.printf("KI: Normaler Move\n");
+                  lcd.print("KI: Normaler Move\n");
                   
                 if(rbuffer[0 + protocol::AI_MOVE] & protocol::CASTLING) {
                   ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
@@ -531,7 +534,7 @@ int main()
                   offset += 6;
                   
                   lcd.cls();
-                  lcd.printf("KI: Rochade\n");
+                  lcd.print("KI: Rochade\n");
                 }
 
                 if(rbuffer[0 + protocol::AI_MOVE] & protocol::ENPASSANT) {
@@ -544,7 +547,7 @@ int main()
                     offset += 4;
                     
                     lcd.cls();
-                    lcd.printf("KI: En passante\n");
+                    lcd.print("KI: En passante\n");
                   }
 
                   if(rbuffer[0 + protocol::AI_MOVE] & protocol::PROMOTION) {
@@ -556,7 +559,7 @@ int main()
                     offset += 6;                
                     
                     lcd.cls();
-                    lcd.printf("KI: Promotion\n");
+                    lcd.print("KI: Promotion\n");
                     //LCDO
                     //TODO: Figur zu der befördert wird anzeigen
                   }
@@ -607,7 +610,7 @@ int main()
               }
 
               lcd.cls();
-              lcd.printf("Illegaler Move\n");
+              lcd.print("Illegaler Move\n");
             }
           } else {
             status = constants::ERROR;

@@ -46,12 +46,18 @@ namespace constants {
     static const PinName PIN_I2C_CLOCK = PB_8;
     static const PinName PIN_I2C_NOTRESET = PG_1;
 
-    static const PinName PIN_LCD_RESET = PG_2;
+    // Pins für den LCD
+    static const PinName PIN_LCD_RESET = PD_2;
+    static const PinName PIN_LCD_RW = PG_2;
     static const PinName PIN_LCD_ENABLE = PG_3;
-    static const PinName PIN_LCD_DATA_4 = PD_7;
-    static const PinName PIN_LCD_DATA_5 = PD_6;
-    static const PinName PIN_LCD_DATA_6 = PD_5;
-    static const PinName PIN_LCD_DATA_7 = PD_4;
+    static const PinName PIN_LCD_DATA_0 = PD_7;
+    static const PinName PIN_LCD_DATA_1 = PD_6;
+    static const PinName PIN_LCD_DATA_2 = PD_5;
+    static const PinName PIN_LCD_DATA_3 = PD_4;
+    static const PinName PIN_LCD_DATA_4 = PD_3;
+    static const PinName PIN_LCD_DATA_5 = PE_2;
+    static const PinName PIN_LCD_DATA_6 = PE_4;
+    static const PinName PIN_LCD_DATA_7 = PE_5;
 }
 
 
