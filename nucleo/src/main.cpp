@@ -503,12 +503,12 @@ int main()
               }
 
               if(rbuffer[0] & protocol::CHECKMATE) {
-                  ledsOff();
+                ledsOff();
 
                 printf("Player: Checkmate\n");
 
-                checkmate.x = rbuffer[3 + offset];
-                checkmate.y = rbuffer[4 + offset];
+                checkmate.x = rbuffer[1 + offset];
+                checkmate.y = rbuffer[2 + offset];
 
                 gameEnded = 1;
               }
