@@ -296,8 +296,10 @@ int main()
           }
 
          
-          if(sendTelegram(socket, constants::START, gameType, 0, 0, 0) == 1) {
+          if(sendTelegram(&socket, protocol::START, gameType, 0, 0, 0) == 1) {
             if(socket.recv(rbuffer, sizeof rbuffer) < 0) {
+              status = constants::ERROR;
+            } else {
               printf("Socket recvd\n");
               if(rbuffer[0] == 0) {
                 status = constants::BOARDSETUP;
