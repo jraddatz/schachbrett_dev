@@ -299,7 +299,6 @@ int main()
             if(socket.recv(rbuffer, sizeof rbuffer) < 0) {
               status = constants::ERROR;
             } else {
-              printf("Socket recvd\n");
               if(rbuffer[0] == 0) {
                 status = constants::BOARDSETUP;
               }  else {
@@ -307,7 +306,6 @@ int main()
               }
             }  
             socket.close(); 
-            printf("Socket closed\n");
           } else {
             status = constants::ERROR;
           }
@@ -420,209 +418,208 @@ int main()
         case constants::WAITINGSERVER:
           printf("Waitingserver\n");
           ledsOff();
-
-          rcount = socket.recv(rbuffer, sizeof rbuffer);
-          socket.close();
-
-          offset = 0;
-          if(!(rbuffer[0] & protocol::ERROR)) {
-            if(!(rbuffer[0] & protocol::ILLEGAL)) {
-              if(rbuffer[0] & protocol::CASTLING) {
-                ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-                ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-                lcd.cls();
-                lcd.printf("Rochade: Turm setzen\n");
-
-                printf("Player: Castling\n");
-
-
-                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
-                offset += 4;
-              }
-
-              if(rbuffer[0] & protocol::ENPASSANT) {
-                ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-
-                printf("Player: Enpassant\n");
-
-                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                offset += 2;
-
-                lcd.cls();
-                lcd.printf("En passante\n");
-                
-              }
-
-              if(rbuffer[0] & protocol::PROMOTION) {
-                isPromoted = true;
-
-                ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-                while ( (buttonQueen.read() && buttonKnight.read() && buttonBishop.read() && buttonRook.read() )) {
-                  wait(0.1);
-                }
-
-                {
-                  uint8_t promotionChar;
-
-                  if(!buttonQueen.read()) {
-                    promotionChar = protocol::QUEEN;
-                  } else if (!buttonKnight.read()) {
-                    promotionChar = protocol::KNIGHT;
-                  } else if (!buttonBishop.read()) {
-                    promotionChar = protocol::BISHOP;
-                  } else if (!buttonRook.read()) {
-                    promotionChar = protocol::ROOK;
-                  }
-
-                  if(sendTelegram(&socket, protocol::PROMOTION, promotionChar, 0, 0, 0) == 1) {
-                    addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                    addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
-
-                    offset += 2;
-
-                    //LCDO
-                    //TODO: Promotion
-                  } else {
-                    status = constants::ERROR;
-                  }
-                }
-              }
-
-              if(rbuffer[0] & protocol::CHECK) {
-                ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-
-                printf("Player: Check\n");
-
-                offset += 2;
-              }
-
-              if(rbuffer[0] & protocol::CHECKMATE) {
-                ledsOff();
-
-                printf("Player: Checkmate\n");
-
-                checkmate.x = rbuffer[1 + offset];
-                checkmate.y = rbuffer[2 + offset];
-
-                gameEnded = 1;
-              }
-
-              ledsOff();
-              if(gameType == protocol::AI) {
-
-                // ***************************************************
-                // Ab hier AI-Move
-                // ***************************************************
-
-                offset = protocol::AI_MOVE;
-
-                if(rbuffer[0 + protocol::AI_MOVE] & protocol::ILLEGAL) {
+          if(socket.recv(rbuffer, sizeof rbuffer) < 0) {
+              status = constants::ERROR;
+          } else {
+            offset = 0;
+            if(!(rbuffer[0] & protocol::ERROR)) {
+              if(!(rbuffer[0] & protocol::ILLEGAL)) {
+                if(rbuffer[0] & protocol::CASTLING) {
                   ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
                   ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                  lcd.cls();
+                  lcd.printf("Rochade: Turm setzen\n");
 
-                  printf("AI OK\n");
+                  printf("Player: Castling\n");
 
-                  
+
                   addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                  if(checkField(rbuffer[3 + offset], rbuffer[4 + offset])) addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
                   addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
+                  offset += 4;
+                }
 
+                if(rbuffer[0] & protocol::ENPASSANT) {
+                  ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+
+                  printf("Player: Enpassant\n");
+
+                  addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
                   offset += 2;
 
                   lcd.cls();
-                  lcd.printf("KI: Normaler Move\n");
+                  lcd.printf("En passante\n");
                   
-                if(rbuffer[0 + protocol::AI_MOVE] & protocol::CASTLING) {
-                  ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-                  ledToggle(rbuffer[5 + offset], rbuffer[6 + offset]);
-
-                  printf("AI Castling\n");
-
-                  addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
-                  addPendingMove(rbuffer[5 + offset], rbuffer[6 + offset], constants::DOWN);
-
-                  offset += 6;
-                  
-                  lcd.cls();
-                  lcd.printf("KI: Rochade\n");
                 }
 
-                if(rbuffer[0 + protocol::AI_MOVE] & protocol::ENPASSANT) {
-                    ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                if(rbuffer[0] & protocol::PROMOTION) {
+                  isPromoted = true;
 
-                    printf("AI Enpassant\n");
-
-                    addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
-
-                    offset += 4;
-                    
-                    lcd.cls();
-                    lcd.printf("KI: En passante\n");
+                  ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+                  while ( (buttonQueen.read() && buttonKnight.read() && buttonBishop.read() && buttonRook.read() )) {
+                    wait(0.1);
                   }
 
-                  if(rbuffer[0 + protocol::AI_MOVE] & protocol::PROMOTION) {
-                    printf("AI Promotion\n");
+                  {
+                    uint8_t promotionChar;
 
-                    addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                    addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);                
-                    
-                    offset += 6;                
-                    
-                    lcd.cls();
-                    lcd.printf("KI: Promotion\n");
-                    //LCDO
-                    //TODO: Figur zu der befördert wird anzeigen
+                    if(!buttonQueen.read()) {
+                      promotionChar = protocol::QUEEN;
+                    } else if (!buttonKnight.read()) {
+                      promotionChar = protocol::KNIGHT;
+                    } else if (!buttonBishop.read()) {
+                      promotionChar = protocol::BISHOP;
+                    } else if (!buttonRook.read()) {
+                      promotionChar = protocol::ROOK;
+                    }
+
+                    if(sendTelegram(&socket, protocol::PROMOTION, promotionChar, 0, 0, 0) == 1) {
+                      addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                      addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
+
+                      offset += 2;
+
+                      //LCDO
+                      //TODO: Promotion
+                    } else {
+                      status = constants::ERROR;
+                    }
                   }
-
                 }
 
+                if(rbuffer[0] & protocol::CHECK) {
+                  ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
 
+                  printf("Player: Check\n");
 
-                if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECK) {
-                  ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-                  
-                  printf("AI Check\n");
-
-                  //LCDO
+                  offset += 2;
                 }
 
-                if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECKMATE) {
+                if(rbuffer[0] & protocol::CHECKMATE) {
                   ledsOff();
 
-                  printf("AI Checkmate\n");
+                  printf("Player: Checkmate\n");
 
-                  checkmate.x = rbuffer[3 + offset];
-                  checkmate.y = rbuffer[4 + offset];
+                  checkmate.x = rbuffer[1 + offset];
+                  checkmate.y = rbuffer[2 + offset];
 
-                  gameEnded = 1;                  
-                  //LCDO
+                  gameEnded = 1;
                 }
 
+                ledsOff();
+                if(gameType == protocol::AI) {
+
+                  // ***************************************************
+                  // Ab hier AI-Move
+                  // ***************************************************
+
+                  offset = protocol::AI_MOVE;
+
+                  if(rbuffer[0 + protocol::AI_MOVE] & protocol::ILLEGAL) {
+                    ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+                    ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+
+                    printf("AI OK\n");
+
+                    
+                    addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                    if(checkField(rbuffer[3 + offset], rbuffer[4 + offset])) addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
+                    addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
+
+                    offset += 2;
+
+                    lcd.cls();
+                    lcd.printf("KI: Normaler Move\n");
+                    
+                  if(rbuffer[0 + protocol::AI_MOVE] & protocol::CASTLING) {
+                    ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                    ledToggle(rbuffer[5 + offset], rbuffer[6 + offset]);
+
+                    printf("AI Castling\n");
+
+                    addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
+                    addPendingMove(rbuffer[5 + offset], rbuffer[6 + offset], constants::DOWN);
+
+                    offset += 6;
+                    
+                    lcd.cls();
+                    lcd.printf("KI: Rochade\n");
+                  }
+
+                  if(rbuffer[0 + protocol::AI_MOVE] & protocol::ENPASSANT) {
+                      ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+
+                      printf("AI Enpassant\n");
+
+                      addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
+
+                      offset += 4;
+                      
+                      lcd.cls();
+                      lcd.printf("KI: En passante\n");
+                    }
+
+                    if(rbuffer[0 + protocol::AI_MOVE] & protocol::PROMOTION) {
+                      printf("AI Promotion\n");
+
+                      addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                      addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);                
+                      
+                      offset += 6;                
+                      
+                      lcd.cls();
+                      lcd.printf("KI: Promotion\n");
+                      //LCDO
+                      //TODO: Figur zu der befördert wird anzeigen
+                    }
+
+                  }
+
+                  if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECK) {
+                    ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                    
+                    printf("AI Check\n");
+
+                    //LCDO
+                  }
+
+                  if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECKMATE) {
+                    ledsOff();
+
+                    printf("AI Checkmate\n");
+
+                    checkmate.x = rbuffer[3 + offset];
+                    checkmate.y = rbuffer[4 + offset];
+
+                    gameEnded = 1;                  
+                    //LCDO
+                  }
+
+                }
+
+              if(!isPromoted && gameType == protocol::PVP) {
+                player = !player;
               }
 
-            if(!isPromoted && gameType == protocol::PVP) {
-              player = !player;
-            }
+              } else {
+                printf("Player Illegal\n");
 
+                ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+                ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                
+                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
+                addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
+                if(bufferPlayerMoves[2].x == bufferPlayerMoves[1].x && bufferPlayerMoves[1].y == bufferPlayerMoves[2].y && bufferPlayerMoves[1].up != bufferPlayerMoves[2].up) {
+                  addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
+                }
+
+                lcd.cls();
+                lcd.printf("Illegaler Move\n");
+              }
             } else {
-              printf("Player Illegal\n");
-
-              ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-              ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-              
-              addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-              addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
-              if(bufferPlayerMoves[2].x == bufferPlayerMoves[1].x && bufferPlayerMoves[1].y == bufferPlayerMoves[2].y && bufferPlayerMoves[1].up != bufferPlayerMoves[2].up) {
-                addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
-              }
-
-              lcd.cls();
-              lcd.printf("Illegaler Move\n");
+              status = constants::ERROR;
             }
-          } else {
-            status = constants::ERROR;
-          }
+          }  
+          socket.close(); 
 
           if(status != constants::ENDGAME && status != constants::ERROR) status = constants::WAITINGPLAYER;
           break;
