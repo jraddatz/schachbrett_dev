@@ -260,6 +260,9 @@ int main()
         case constants::NEWGAME:
           printf("NEWGAME\n");
 
+          gameEnded = 0;
+          player = constants::WHITE;
+
           lcd.cls();
           lcd.printf("Choose Mode!");
 
@@ -274,21 +277,26 @@ int main()
             }
           }
 
-          socket.open(&net);
-          socket.connect(constants::SERVER_ADDRESS, constants::SERVER_PORT);
-          sendBuffer[0] = protocol::START;
-          sendBuffer[1] = gameType;
-          socket.send(sendBuffer, sizeof sendBuffer);
-          rcount = socket.recv(rbuffer, sizeof rbuffer);
-          if(rbuffer[0] == 0) {
-            status = constants::BOARDSETUP;
-          }  else {
+          if (socket.open(&net) != 0) {
             status = constants::ERROR;
-          }
-          socket.close();   
-
-          gameEnded = 0;
-          player = constants::WHITE;       
+          } else {
+            if (socket.connect(constants::SERVER_ADDRESS, constants::SERVER_PORT) != 0) {
+              status = constants::ERROR;
+            } else {
+              sendBuffer[0] = protocol::START;
+              sendBuffer[1] = gameType;
+              if(socket.send(sendBuffer, sizeof sendBuffer) != 0) {
+                if(socket.recv(rbuffer, sizeof rbuffer) < 0) {
+                  if(rbuffer[0] == 0) {
+                    status = constants::BOARDSETUP;
+                  }  else {
+                    status = constants::ERROR;
+                  }
+                }  
+              }
+            }
+            socket.close(); 
+          }      
           break;
 
         case constants::BOARDSETUP:
