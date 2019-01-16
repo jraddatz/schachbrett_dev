@@ -4,7 +4,7 @@
 #include <mbed.h>
 
 namespace constants {
-    static const char* SERVER_ADDRESS = "192.168.1.102";
+    static const char* SERVER_ADDRESS = "192.168.1.108";
     static const int SERVER_PORT = 3000;
 
     static const char* OWN_ADDRESS = "192.168.1.102";
