@@ -28,7 +28,7 @@ LCD162C::LCD162C(PinName rs, PinName rw, PinName e,
 void LCD162C::print(const char* str){
     uint8_t i = 0;
     while ( i < 32 && str[i]){
-        writeByte(str[i]);
+        writeByte(str[i++]);
     }
 }
 
