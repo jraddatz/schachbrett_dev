@@ -217,6 +217,25 @@ void clearMails() {
   }
 }
 
+EthernetInterface net;
+
+uint8_t sendTelegram(TCPSocket* socket, char commandByte, char byte1, char byte2, char byte3, char byte4) {
+  if (socket->open(&net) != 0) {
+    return -1;
+  } else {
+    printf("Socket open\n");
+    if (socket->connect(constants::SERVER_ADDRESS, constants::SERVER_PORT) != 0) {
+      return -1;
+    } else {
+      printf("Socket connected\n");
+      char sendBuffer[5] = {commandByte, byte1, byte2, byte3, byte4};
+      if(socket->send(sendBuffer, sizeof sendBuffer) != 0) {
+        return 1; 
+      }
+    }
+  }
+}
+
 char sendBuffer[5];
 int offset;
 char rbuffer[64];
@@ -233,7 +252,6 @@ int main()
 
   buttonStart.rise(&startPressed);
 
-  EthernetInterface net;
   //net.set_network(constants::OWN_ADDRESS, constants::NETMASK, constants::GATEWAY);
   net.connect();
 
@@ -277,26 +295,21 @@ int main()
             }
           }
 
-          if (socket.open(&net) != 0) {
-            status = constants::ERROR;
-          } else {
-            if (socket.connect(constants::SERVER_ADDRESS, constants::SERVER_PORT) != 0) {
-              status = constants::ERROR;
-            } else {
-              sendBuffer[0] = protocol::START;
-              sendBuffer[1] = gameType;
-              if(socket.send(sendBuffer, sizeof sendBuffer) != 0) {
-                if(socket.recv(rbuffer, sizeof rbuffer) < 0) {
-                  if(rbuffer[0] == 0) {
-                    status = constants::BOARDSETUP;
-                  }  else {
-                    status = constants::ERROR;
-                  }
-                }  
+         
+          if(sendTelegram(socket, constants::START, gameType, 0, 0, 0) == 1) {
+            if(socket.recv(rbuffer, sizeof rbuffer) < 0) {
+              printf("Socket recvd\n");
+              if(rbuffer[0] == 0) {
+                status = constants::BOARDSETUP;
+              }  else {
+                status = constants::ERROR;
               }
-            }
+            }  
             socket.close(); 
-          }      
+            printf("Socket closed\n");
+          } else {
+            status = constants::ERROR;
+          }
           break;
 
         case constants::BOARDSETUP:
