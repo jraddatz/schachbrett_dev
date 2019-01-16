@@ -8,14 +8,20 @@ class KS0070B;
 class KS0070B
 {
 public:
+    KS0070B(PinName rs, PinName rw, PinName e,
+    PinName d0, PinName d1, PinName d2, PinName d3,
+    PinName d4, PinName d5, PinName d6, PinName d7);
     KS0070B(PinName pin_e);
     KS0070B* print(const char *str);
     KS0070B* printnb(float nb, int left, int right);
     KS0070B* clear();
     KS0070B* pos(int line, int column);    
-    
+    void cls();
 private:
     void send(unsigned char data, bool isinstruction);
+    
+    DigitalOut rs, rw, e;
+    BusInOut databus;
 };
  
 

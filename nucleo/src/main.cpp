@@ -21,7 +21,7 @@ MCP23017 mcps[8] = {
 
 //          rs,   e   , D4  , D5  , D6  , D7
 //TextLCD lcd(constants::PIN_LCD_RESET, constants::PIN_LCD_ENABLE, constants::PIN_LCD_DATA_4, constants::PIN_LCD_DATA_5, constants::PIN_LCD_DATA_6, constants::PIN_LCD_DATA_7);
-LCD162C lcd (constants::PIN_LCD_RESET, constants::PIN_LCD_RW, constants::PIN_LCD_ENABLE, 
+KS0070B lcd (constants::PIN_LCD_RESET, constants::PIN_LCD_RW, constants::PIN_LCD_ENABLE, 
 constants::PIN_LCD_DATA_0, constants::PIN_LCD_DATA_1, constants::PIN_LCD_DATA_2, constants::PIN_LCD_DATA_3, 
 constants::PIN_LCD_DATA_4, constants::PIN_LCD_DATA_5, constants::PIN_LCD_DATA_6, constants::PIN_LCD_DATA_7);
 
