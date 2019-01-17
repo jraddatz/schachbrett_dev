@@ -6,6 +6,7 @@
 #include "TextLCD.h"
 #include "consts.h"
 #include "Board.h"
+#include "coords.h"
 
 Board b;
 
@@ -23,15 +24,6 @@ DigitalIn buttonPVP(constants::PIN_BUTTON_PVP, PullUp);
 InterruptIn buttonStart(constants::PIN_BUTTON_START);
 
 EthernetInterface net;
-
-/**
- * struct for the move of a single figure
- */
-typedef struct {
-  uint8_t x;
-  uint8_t y;
-  bool up;
-} coords;
 
 Mail<coords, 10> communication;
 Mail<coords, 10> pendingMoves;
@@ -59,13 +51,13 @@ uint8_t checkBoardSetup(){
   uint8_t misplaced = 0;
   for ( uint8_t x = 0 ; x < 8; x++) {
     for (uint8_t y = 0; y < 2; y++) {
-      if(!checkField(x,y)) {
+      if(!b.checkField(x,y)) {
         b.ledToggle(x,y);
         misplaced++;
       }
     }
     for (uint8_t y = 6; y < 8; y++) {
-      if(!checkField(x,y)){
+      if(!b.checkField(x,y)){
         b.ledToggle(x,y);
         misplaced++;
       }
@@ -79,30 +71,19 @@ uint8_t checkBoardSetup(){
  */
 void checker_thread() {
   static uint8_t change = 0;
-  while (true){
-    for(uint8_t x = 0; x < 8; x++) {
-      change = mcps[x].getChanges(MCP23017_GPIO_PORT_B);  
-      if(change){
-        coords* pointer = communication.alloc();
-        
-        if(pointer == NULL){
-          // not enough memory available maybe there is a error ?
-        } else {
-          uint8_t a = mcps[x].readGPIO(MCP23017_GPIO_PORT_B);
-          uint8_t y = 0 ;
-          while (change) {
-            if(change&1) {
-              pointer->x = x;
-              pointer->y = y;
-              pointer->up = (a & 1 << y) != 0;
-              communication.put(pointer);
-              printf("x = %d; y = %d; down = %u\n", x, y, (a >> y & 1));
-            }
-            y++;
-            change >>=1;
-          }
-        }
-      }
+  while (true){ // shitty Style -.-
+    // get Change
+    coords c = b.getChange();
+    // allocate Memory 
+    coords* cp = communication.alloc();
+    if (cp == NULL){
+      // Not Enough Memory Available
+
+    } else {
+      // write Message
+      cp->x = c.x;
+      cp->y = c.y;
+      cp->up = c.up;
     }
     wait(constants::TIMEOUT_WHILE_LOOP); 
   }
@@ -450,7 +431,7 @@ int main()
 
                     
                     addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
-                    if(checkField(rbuffer[3 + offset], rbuffer[4 + offset])) addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
+                    if(b.checkField(rbuffer[3 + offset], rbuffer[4 + offset])) addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::UP);
                     addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
 
                     offset += 2;
