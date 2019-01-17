@@ -60,10 +60,6 @@ public:
    */
   void init();
   /**
-   * 
-   */
-  void begin();
-  /**
    * Write Data into a Register 
    * @param register The Register to be rewritten
    * @param data the Data to write into the gien Register
