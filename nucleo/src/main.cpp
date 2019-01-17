@@ -5,18 +5,9 @@
 #include "hardware/MCP23017.h"
 #include "TextLCD.h"
 #include "consts.h"
+#include "Board.h"
 
-Serial pc(USBTX, USBRX); // tx, rx
-I2C i2c(constants::PIN_I2C_DATA, constants::PIN_I2C_CLOCK);
-DigitalOut notReset (constants::PIN_I2C_NOTRESET);
-uint8_t errorCode = 0;
-
-MCP23017 mcps[8] = {
-  MCP23017(0 , i2c ),MCP23017(1 , i2c ),
-  MCP23017(2 , i2c ),MCP23017(3 , i2c ),
-  MCP23017(4 , i2c ),MCP23017(5 , i2c ),
-  MCP23017(6 , i2c ),MCP23017(7 , i2c )
-};
+Board b;
 
 //          rs,   e   , D4  , D5  , D6  , D7
 TextLCD lcd(constants::PIN_LCD_RESET, constants::PIN_LCD_ENABLE, constants::PIN_LCD_DATA_4, 
@@ -59,90 +50,28 @@ char[] stringifyCoords(uint8_t x, uint8_t y) {
 **/
 
 /**
- * 
- */
-void setup(){
-  
-}
-
-/**
- * toggle an LED at the given coordinates
- * @param x the x coordinate of the LED
- * @param y the y coordinate of the LED
- * @oaram on 1 for on, 0 for off (default is 1)
- *    
- */
-void ledToggle(uint8_t x, uint8_t y, uint8_t on = 1 ){
-  if(x >= 8 || y >= 8){
-    return ;
-  }
-  uint8_t a = mcps[x].readGPIO(MCP23017_GPIO_PORT_A);
-  a = on ? a | 1 << y : a & ~(1<<y);
-  mcps[x].writeGPIO(MCP23017_GPIO_PORT_A, a );
-}
-
-/**
- * returns the status of the field at given coordinates
- * @param x the x coordinate of the field
- * @param y the y coordinate of the field
- * @return 1 for occupied, 0 for empty
- */
-uint8_t checkField (uint8_t x, uint8_t y){
-  if(x >= 8 || y >= 8){
-    return -1; // error
-  }
-  uint8_t a = mcps[x].readGPIO(MCP23017_GPIO_PORT_B);
-  return (a >> y & 1) ^ 1;
-}
-
-/**
- * Toggles all LEDs off
- */
-void ledsOff(){
-  for(uint8_t x = 0; x < 8; x++){
-    errorCode = mcps[x].writeGPIO(MCP23017_GPIO_PORT_A, 0x00);
-    if (errorCode) {
-      // reset();
-    }
-  }
-}
-
-/**
  * Checks if the sensors of all startfields are occupied
  * Turns the LED of the not occupied fields on
  * @return number of misplaced figures
  */
 uint8_t checkBoardSetup(){
-  ledsOff();
+  b.ledsOff();
   uint8_t misplaced = 0;
   for ( uint8_t x = 0 ; x < 8; x++) {
     for (uint8_t y = 0; y < 2; y++) {
       if(!checkField(x,y)) {
-        ledToggle(x,y);
+        b.ledToggle(x,y);
         misplaced++;
       }
     }
     for (uint8_t y = 6; y < 8; y++) {
       if(!checkField(x,y)){
-        ledToggle(x,y);
+        b.ledToggle(x,y);
         misplaced++;
       }
     }
   }
   return misplaced;
-}
-
-/**
- * Helper Function to reset all GPIO Extender
- */
-void resetI2C(){
-  notReset = 0;
-  wait_ms(1);
-  notReset = 1;
-  for(int i = 0; i < 8 ; i++){
-    mcps[i].init();
-  }
-
 }
 
 /**
@@ -238,12 +167,11 @@ uint8_t sendTelegram(TCPSocket* socket, char commandByte, char byte1, char byte2
 }
 
 int main() 
-{
-  //TODO: Setup-Routine?
-  // setup();
+{/*
   i2c.frequency(100000);
   resetI2C(); 
-
+*/
+  b.init();
   buttonStart.rise(&startPressed);
 
   //net.set_network(constants::OWN_ADDRESS, constants::NETMASK, constants::GATEWAY);
@@ -266,9 +194,8 @@ int main()
   int rcount;
   Thread thread;
 
-  for(uint8_t y = 0; y < 8; y++) {
-    mcps[y].getChanges(MCP23017_GPIO_PORT_B); 
-  }
+  // update All
+  b.updateAll();
   thread.start(checker_thread);
 
   while (1)
@@ -342,7 +269,7 @@ int main()
 
         case constants::ONEUP:
           printf("Oneup\n");
-          ledToggle(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y);
+          b.ledToggle(bufferPlayerMoves[0].x, bufferPlayerMoves[0].y);
           evtCommunication = communication.get();
           if(evtCommunication.status == osEventMail) {
             coords* nextCoord = (coords*) evtCommunication.value.p;
@@ -355,7 +282,7 @@ int main()
               status = constants::TWOUP;
             } else {
               if(bufferPlayerMoves[0].x == bufferPlayerMoves[1].x && bufferPlayerMoves[0].y == bufferPlayerMoves[1].y) {
-                ledsOff();
+                b.ledsOff();
                 status = constants::START;
               } else {
                 status = constants::SEND;
@@ -367,7 +294,7 @@ int main()
 
         case constants::TWOUP:
           printf("Twoup\n");
-          ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
+          b.ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
           evtCommunication = communication.get();
           if(evtCommunication.status == osEventMail) {
             coords* nextCoord = (coords*) evtCommunication.value.p;
@@ -387,7 +314,7 @@ int main()
               //TODO: Zwei Moves/Coords vergleichen als Hilfsfunktion
               if(bufferPlayerMoves[1].x == bufferPlayerMoves[2].x && bufferPlayerMoves[1].y == bufferPlayerMoves[2].y) {
                 status = constants::SEND;
-                ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, constants::OFF);
+                b.ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y, constants::OFF);
                 wait(constants::TIMEOUT_BLINK);
               } else {
                 addPendingMove(bufferPlayerMoves[2].x, bufferPlayerMoves[2].y, !bufferPlayerMoves[2].up);
@@ -406,7 +333,7 @@ int main()
         case constants::SEND:
           printf("Send\n");
 
-          ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
+          b.ledToggle(bufferPlayerMoves[1].x, bufferPlayerMoves[1].y);
 
           if(sendTelegram(&socket, protocol::TURN, bufferPlayerMoves[0].x, bufferPlayerMoves[0].y, bufferPlayerMoves[1].x, bufferPlayerMoves[1].y) == 1) {
             status = constants::WAITINGSERVER;
@@ -417,7 +344,7 @@ int main()
         
         case constants::WAITINGSERVER:
           printf("Waitingserver\n");
-          ledsOff();
+          b.ledsOff();
           if(socket.recv(rbuffer, sizeof rbuffer) < 0) {
               status = constants::ERROR;
           } else {
@@ -426,8 +353,8 @@ int main()
             if(!(rbuffer[0] & protocol::ERROR)) {
               if(!(rbuffer[0] & protocol::ILLEGAL)) {
                 if(rbuffer[0] & protocol::CASTLING) {
-                  ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-                  ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                  b.ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+                  b.ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
                   lcd.cls();
                   lcd.printf("Rochade: Turm setzen\n");
 
@@ -440,7 +367,7 @@ int main()
                 }
 
                 if(rbuffer[0] & protocol::ENPASSANT) {
-                  ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+                  b.ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
 
                   printf("Player: Enpassant\n");
 
@@ -455,7 +382,7 @@ int main()
                 if(rbuffer[0] & protocol::PROMOTION) {
                   isPromoted = true;
 
-                  ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+                  b.ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
                   while ( (buttonQueen.read() && buttonKnight.read() && buttonBishop.read() && buttonRook.read() )) {
                     wait(0.1);
                   }
@@ -488,7 +415,7 @@ int main()
                 }
 
                 if(rbuffer[0] & protocol::CHECK) {
-                  ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+                  b.ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
 
                   printf("Player: Check\n");
 
@@ -496,7 +423,7 @@ int main()
                 }
 
                 if(rbuffer[0] & protocol::CHECKMATE) {
-                  ledsOff();
+                  b.ledsOff();
 
                   printf("Player: Checkmate\n");
 
@@ -506,7 +433,7 @@ int main()
                   gameEnded = 1;
                 }
 
-                ledsOff();
+                b.ledsOff();
                 if(gameType == protocol::AI) {
 
                   // ***************************************************
@@ -516,8 +443,8 @@ int main()
                   offset = protocol::AI_MOVE;
 
                   if(rbuffer[0 + protocol::AI_MOVE] & protocol::ILLEGAL) {
-                    ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-                    ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                    b.ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+                    b.ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
 
                     printf("AI OK\n");
 
@@ -532,8 +459,8 @@ int main()
                     lcd.printf("KI: Normaler Move\n");
                     
                   if(rbuffer[0 + protocol::AI_MOVE] & protocol::CASTLING) {
-                    ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
-                    ledToggle(rbuffer[5 + offset], rbuffer[6 + offset]);
+                    b.ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                    b.ledToggle(rbuffer[5 + offset], rbuffer[6 + offset]);
 
                     printf("AI Castling\n");
 
@@ -547,7 +474,7 @@ int main()
                   }
 
                   if(rbuffer[0 + protocol::AI_MOVE] & protocol::ENPASSANT) {
-                      ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                      b.ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
 
                       printf("AI Enpassant\n");
 
@@ -576,7 +503,7 @@ int main()
                   }
 
                   if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECK) {
-                    ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                    b.ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
                     
                     printf("AI Check\n");
 
@@ -584,7 +511,7 @@ int main()
                   }
 
                   if(rbuffer[0 + protocol::AI_MOVE] & protocol::CHECKMATE) {
-                    ledsOff();
+                    b.ledsOff();
 
                     printf("AI Checkmate\n");
 
@@ -604,8 +531,8 @@ int main()
               } else {
                 printf("Player Illegal\n");
 
-                ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
-                ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
+                b.ledToggle(rbuffer[1 + offset], rbuffer[2 + offset]);
+                b.ledToggle(rbuffer[3 + offset], rbuffer[4 + offset]);
                 
                 addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::UP);
                 addPendingMove(rbuffer[3 + offset], rbuffer[4 + offset], constants::DOWN);
@@ -629,14 +556,14 @@ int main()
           evtPendingMoves = pendingMoves.get(constants::TIMEOUT_GET_MAIL);
           while(evtPendingMoves.status == osEventMail) {
             coords* nextPending = (coords*) evtPendingMoves.value.p;
-            ledToggle(nextPending->x, nextPending->y, constants::ON);
+            b.ledToggle(nextPending->x, nextPending->y, constants::ON);
             bool moveMade = false;
             while(!moveMade) {
               evtCommunication = communication.get(constants::TIMEOUT_GET_MAIL);
               if(evtCommunication.status == osEventMail) {
                 coords* nextMade = (coords*) evtCommunication.value.p;
                 if((nextPending->x == nextMade->x && nextPending->y == nextMade->y && nextPending->up == nextMade->up)) {
-                  ledToggle(nextPending->x, nextPending->y, constants::OFF);
+                  b.ledToggle(nextPending->x, nextPending->y, constants::OFF);
                   moveMade = true;
                   wait(constants::TIMEOUT_BLINK);   
                 } 
@@ -657,11 +584,11 @@ int main()
               status = constants::START;
             }
           }
-        break;
+          break;
 
         case constants::ENDGAME:
           printf("ENDGAME\n");
-          ledToggle(checkmate.x, checkmate.y, gameEnded);
+          b.ledToggle(checkmate.x, checkmate.y, gameEnded);
           gameEnded ^= 1;
           wait(constants::TIMEOUT_BLINK);
           break;
