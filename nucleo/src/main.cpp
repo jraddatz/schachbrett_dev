@@ -71,19 +71,21 @@ uint8_t checkBoardSetup(){
  */
 void checker_thread() {
   static uint8_t change = 0;
-  while (true){ // shitty Style -.-
+  while (true){
     // get Change
     coords c = b.getChange();
-    // allocate Memory 
-    coords* cp = communication.alloc();
-    if (cp == NULL){
+    if(c.x != -1){
+      // allocate Memory 
+      coords* cp = communication.alloc();
+      if (cp == NULL){
       // Not Enough Memory Available
 
-    } else {
-      // write Message
-      cp->x = c.x;
-      cp->y = c.y;
-      cp->up = c.up;
+      } else {
+        // write Message
+        cp->x = c.x;
+        cp->y = c.y;
+        cp->up = c.up;
+      }
     }
     wait(constants::TIMEOUT_WHILE_LOOP); 
   }

@@ -59,6 +59,7 @@ void Board::updateAll(){
 
 coords Board::getChange(){
   coords ret;
+  ret.x = -1;
   uint8_t change;
   for(uint8_t x = 0; x < 8; x++) {
     change = mcps[x].getChanges(MCP23017_GPIO_PORT_B);  
