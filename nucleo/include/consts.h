@@ -4,15 +4,25 @@
 #include <mbed.h>
 
 namespace constants {
-    static const char* SERVER_ADDRESS = "192.168.1.108";
+    static const char *SERVER_ADDRESS = "192.168.1.108";
     static const int SERVER_PORT = 3000;
 
-    static const char* OWN_ADDRESS = "192.168.1.102";
-    static const char* NETMASK = "255.255.255.0";
-    static const char* GATEWAY = "192.168.1.1";
+    static const char *OWN_ADDRESS = "192.168.1.102";
+    static const char *NETMASK = "255.255.255.0";
+    static const char *GATEWAY = "192.168.1.1";
 
     enum Status {
-        FIRSTINIT = 0, NEWGAME = 10, BOARDSETUP = 20, START = 30, ONEUP = 40, TWOUP = 50, SEND = 60, WAITINGSERVER = 70, WAITINGPLAYER = 80, ENDGAME = 100, ERROR = 255
+        FIRSTINIT = 0,
+        NEWGAME = 10,
+        BOARDSETUP = 20,
+        START = 30,
+        ONEUP = 40,
+        TWOUP = 50,
+        SEND = 60,
+        WAITINGSERVER = 70,
+        WAITINGPLAYER = 80,
+        ENDGAME = 100,
+        ERROR = 255
     };
 
     enum Player {
@@ -36,7 +46,7 @@ namespace constants {
 
     static const PinName PIN_BUTTON_QUEEN = PB_12;
     static const PinName PIN_BUTTON_KNIGHT = PA_15;
-    static const PinName PIN_BUTTON_BISHOP = PC_7; 
+    static const PinName PIN_BUTTON_BISHOP = PC_7;
     static const PinName PIN_BUTTON_ROOK = PB_5;
     static const PinName PIN_BUTTON_START = PB_13;
     static const PinName PIN_BUTTON_AI = PC_6;
@@ -53,7 +63,6 @@ namespace constants {
     static const PinName PIN_LCD_DATA_6 = PD_5;
     static const PinName PIN_LCD_DATA_7 = PD_4;
 }
-
 
 
 #endif 

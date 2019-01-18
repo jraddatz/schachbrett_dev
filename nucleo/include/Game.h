@@ -1,5 +1,6 @@
 #ifndef GAME_H
 #define GAME_H
+
 #include <mbed.h>
 
 #include <EthernetInterface.h>
@@ -14,8 +15,11 @@
 class Game {
 public:
     Game();
+
     void init();
+
     void step();
+
 private:
     /**
      * Checks if the sensors of all startfields are occupied
@@ -28,6 +32,7 @@ private:
      * Thread for checking the GPIO Extenders. If there is a Sensor which did change, there will be a message written to the Communication Mail.
      */
     void checker_thread();
+
     /**
      * @brief Starts the Checker Thread
      * 
@@ -58,15 +63,15 @@ private:
      * @param byte4 
      * @return uint8_t 
      */
-    uint8_t sendTelegram(TCPSocket* socket, char commandByte, char byte1, char byte2, char byte3, char byte4); 
-    
+    uint8_t sendTelegram(TCPSocket *socket, char commandByte, char byte1, char byte2, char byte3, char byte4);
+
     /**
      * @brief ISC incase the start Button was pressed
      * 
      */
     void startPressed();
-    
-    
+
+
     Board b;
     DigitalIn buttonQueen;
     DigitalIn buttonKnight;
@@ -79,7 +84,7 @@ private:
 
     TCPSocket socket;
 
-    TextLCD lcd; 
+    TextLCD lcd;
 
     EthernetInterface net;
 
@@ -108,7 +113,7 @@ private:
     int offset;
     char rbuffer[64];
     int rcount;
-    
+
     bool buttonPressed;
     int gameType;
     bool player;
