@@ -36,16 +36,16 @@
 #define MCP23017_INT_ERR 255
 /**
  * Hardware class for the MCP23017 GPIO Extender
- * PortA is for The LEDs
- * PortB is for the hal sensor
+ * PortA is for The LEDs<br>
+ * PortB is for the hal sensor<br>
  * 
- * PortB pins 1-8
- * PortA pins 21-28
- * VDD pin 9
- * VSS pin 10
- * SCL pin 12
- * SDA pin 13
- * A0,A1,A2 pins 15,16,17
+ * PortB pins 1-8  <br>
+ * PortA pins 21-28<br>
+ * VDD pin 9<br>
+ * VSS pin 10<br>
+ * SCL pin 12<br>
+ * SDA pin 13<br>
+ * A0,A1,A2 pins 15,16,17<br>
  */
 class MCP23017 {
 public:
@@ -54,37 +54,46 @@ public:
   * @param id the ID of the MCP which is Based on the A0, A1, A2 configuration.
   * @param i2c_ the I2C interface the MCP23017 is connected with
   */
-  MCP23017(uint8_t, I2C & i2c_);
+  MCP23017(uint8_t id, I2C & i2c_);
   /**
    * initialisation of the MCP23017. PortA gets configured as Output for the LEDs. PortB gets configured as Input for the Sensors and the Pullup are activated.
    */
   void init();
   /**
    * Write Data into a Register 
-   * @param register The Register to be rewritten
+   * @param reg The Register to be rewritten
    * @param data the Data to write into the gien Register
    * @return uint8_t 
    */
-  uint8_t writeRegister(uint8_t, uint8_t);
+  uint8_t writeRegister(uint8_t reg, uint8_t data);
   /**
    * Read current Value of a Register 
-   * @param which Register
+   * @param reg which Register
    * @return 
    */
-  uint8_t readRegister(uint8_t);
+  uint8_t readRegister(uint8_t reg);
   /**
-   * Read a GPIO 
-   * @return 
-   */
-  uint8_t readGPIO(uint8_t);
-  /**
+   * @brief Reads directly from the designated Port
    * 
+   * @param port which port should be read
+   * @return uint8_t 
    */
-  uint8_t writeGPIO(uint8_t, uint8_t);
+  uint8_t readGPIO(uint8_t port);
   /**
+   * @brief writes directly on the GPIO
    * 
+   * @param port    which Port to be writen on
+   * @param data    The Data which should be written
+   * @return uint8_t 
    */
-  uint8_t getChanges(uint8_t);
+  uint8_t writeGPIO(uint8_t port, uint8_t data);
+  /**
+   * @brief Get the Changes which happened on the Port
+   * 
+   * @param port which Port should be checked
+   * @return uint8_t 
+   */
+  uint8_t getChanges(uint8_t port);
 private:
   I2C & i2c;
   uint8_t adress;

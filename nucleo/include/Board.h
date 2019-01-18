@@ -7,7 +7,10 @@
 #include "consts.h"
 #include "hardware/MCP23017.h"
 #include "coords.h"
-
+/**
+ * @brief The Hardware Board
+ * Binds all needed MCP23017 in one class and creates an easier Interface for interacting with the Leds/Hallsensors
+ */
 class Board {
 public:
     /**
@@ -21,31 +24,31 @@ public:
      */
     void init();
     /**
-     * toggle an LED at the given coordinates
+     * @brief toggle an LED at the given coordinates
      * @param x the x coordinate of the LED
      * @param y the y coordinate of the LED
-     * @oaram on 1 for on, 0 for off (default is 1)
+     * @param on 1 for on, 0 for off (default is 1)
      *    
      */
     void ledToggle(uint8_t x, uint8_t y, uint8_t on = 1);
     /**
-     * returns the status of the field at given coordinates
+     * @brief returns the status of the field at given coordinates
      * @param x the x coordinate of the field
      * @param y the y coordinate of the field
      * @return 1 for occupied, 0 for empty
      */ 
     uint8_t checkField(uint8_t x, uint8_t y);
     /**
-      * Toggles all LEDs off
+      * @brief Toggles all LEDs off
       */
     void ledsOff();
     /**
-     * @brief 
+     * @brief Takes care of 0 Initialisation
      * 
      */
     void updateAll();
     /**
-     * Helper Function to reset all GPIO Extender
+     * @brief Helper Function to reset all GPIO Extender
      */
     void resetI2C();
     /**

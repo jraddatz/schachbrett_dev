@@ -14,10 +14,22 @@
 
 class Game {
 public:
+    /**
+     * @brief Construct a new Game object
+     * 
+     */
     Game();
 
+    /**
+     * @brief Initialisation of the Game
+     * 
+     */
     void init();
 
+    /**
+     * @brief should be called to let the Game continue by one Step
+     * 
+     */
     void step();
 
 private:
@@ -128,6 +140,5 @@ private:
     Thread thread;
 
 };
-
 
 #endif

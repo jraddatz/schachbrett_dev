@@ -229,9 +229,6 @@ void Game::step() {
                                     addPendingMove(rbuffer[1 + offset], rbuffer[2 + offset], constants::DOWN);
 
                                     offset += 2;
-
-                                    //LCDO
-                                    //TODO: Promotion
                                 } else {
                                     status = constants::ERROR;
                                 }
@@ -449,19 +446,17 @@ uint8_t Game::checkBoardSetup() {
 
 void Game::checker_thread() {
     while (true) {
-        // get Change
         coords c = b.getChange();
-        if (c.x != 255) {
-            // allocate Memory 
+        if (c.x != 255) { 
             coords *cp = communication.alloc();
             if (cp == NULL) {
                 // Not Enough Memory Available
 
             } else {
-                // write Message
                 cp->x = c.x;
                 cp->y = c.y;
                 cp->up = c.up;
+                communication.put(cp);
             }
         }
         wait(constants::TIMEOUT_WHILE_LOOP);
@@ -475,9 +470,7 @@ void Game::Checker_Thread_Start(void const *p) {
 
 bool Game::addPendingMove(uint8_t x, uint8_t y, bool up) {
     coords *pointer = pendingMoves.alloc();
-
     if (pointer == NULL) {
-        // not enough memory available
         return false;
     } else {
         pointer->x = x;
